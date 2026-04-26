@@ -1,4 +1,9 @@
+'use client'
+import { useRouter } from "next/navigation";
+
 export function HeroSection() {
+    const router = useRouter()
+
   return (
     <section className="relative min-h-[490px] pt-20 overflow-hidden sm:min-h-[560px] lg:min-h-[650px]">
       <div
@@ -27,6 +32,7 @@ export function HeroSection() {
           <button
             className="mt-5 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-dark sm:px-7 sm:py-3"
             type="button"
+            onClick={() => router.push('/plan')}
           >
             Mulai Rencanakan
           </button>

@@ -1,5 +1,3 @@
-import { SectionHeading } from "@/components/ui/section-heading";
-
 export function TripPickerSection() {
   return (
     <section className="bg-section py-11 sm:py-14 lg:py-16">
