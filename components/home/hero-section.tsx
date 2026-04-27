@@ -10,7 +10,7 @@ export function HeroSection() {
         className="absolute inset-0 bg-cover bg-center"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(15,23,42,0.4), rgba(15,23,42,0.45)), url('https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=1500&q=80')",
+            "linear-gradient(rgba(15,23,42,0.4), rgba(15,23,42,0.45)), url('/hero-image1.png')",
         }}
       />
 
