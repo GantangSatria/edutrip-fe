@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useCallback } from "react";
 
 import { FlightPriceModal } from "@/components/layout/flight-price-modal";
@@ -34,9 +35,12 @@ export function Header() {
             >
               Plane Information
             </button>
-            <a href="#" className="px-2 py-1.5 transition-all hover:border-gray-500 hover:text-black">
+            <Link
+              href="/admin"
+              className="px-2 py-1.5 transition-all hover:text-black"
+            >
               Admin
-            </a>
+            </Link>
           </div>
 
           <button
@@ -64,9 +68,13 @@ export function Header() {
             >
               Plane Information
             </button>
-            <a href="#" className="px-4 text-center transition-all hover:text-black">
+            <Link
+              href="/admin"
+              className="px-4 text-center transition-all hover:text-black"
+              onClick={() => setIsOpen(false)}
+            >
               Admin
-            </a>
+            </Link>
           </div>
         )}
       </div>
