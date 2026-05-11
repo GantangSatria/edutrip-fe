@@ -7,6 +7,7 @@ import { PlanFilters } from "@/components/plan/plan-filters";
 import { CategorySidebar } from "@/components/plan/category-sidebar";
 import { PlacesGrid } from "@/components/plan/places-grid";
 import { PlanSummaryBar } from "@/components/plan/plan-summary-bar";
+import { TermsModal } from "@/components/plan/terms-modal";
 
 import {
   planCategories,
@@ -17,6 +18,7 @@ import {
 import type { PlanFiltersState, PlanPlace, PlanTag } from "@/types/plan";
 
 export default function PlanPage() {
+  const [showTerms, setShowTerms] = useState(false);
   const [places, setPlaces] = useState<PlanPlace[]>(initialPlaces);
   const [tags, setTags] = useState<PlanTag[]>(initialTags);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -121,7 +123,13 @@ export default function PlanPage() {
         people={filters.people}
         cities={activeCities}
         onDetail={() => console.log("open detail cart")}
-        onConsult={() => window.open("https://wa.me/628123456789", "_blank")}
+        onConsult={() => setShowTerms(true)}
+      />
+
+      <TermsModal
+        open={showTerms}
+        onClose={() => setShowTerms(false)}
+        onAccept={() => window.open("https://wa.me/628123456789", "_blank")}
       />
     </main>
   );
