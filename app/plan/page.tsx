@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 
 import { PlanHeader } from "@/components/plan/plan-header";
 import { PlanFilters } from "@/components/plan/plan-filters";
@@ -8,6 +8,7 @@ import { CategorySidebar } from "@/components/plan/category-sidebar";
 import { PlacesGrid } from "@/components/plan/places-grid";
 import { PlanSummaryBar } from "@/components/plan/plan-summary-bar";
 import { TermsModal } from "@/components/plan/terms-modal";
+import { PlaceDetailModal } from "@/components/plan/place-detail-modal";
 
 import {
   planCategories,
@@ -19,6 +20,7 @@ import type { PlanFiltersState, PlanPlace, PlanTag } from "@/types/plan";
 
 export default function PlanPage() {
   const [showTerms, setShowTerms] = useState(false);
+  const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null);
   const [places, setPlaces] = useState<PlanPlace[]>(initialPlaces);
   const [tags, setTags] = useState<PlanTag[]>(initialTags);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -62,6 +64,22 @@ export default function PlanPage() {
     [tags]
   );
 
+  const detailPlace = useMemo(
+    () => (detailPlaceId ? places.find((p) => p.id === detailPlaceId) ?? null : null),
+    [places, detailPlaceId]
+  );
+
+  const detailCategory = useMemo(() => {
+    if (!detailPlace) return null;
+    return planCategories.find((c) => c.id === detailPlace.categoryId) ?? null;
+  }, [detailPlace]);
+
+  useEffect(() => {
+    if (detailPlaceId != null && !places.some((p) => p.id === detailPlaceId)) {
+      setDetailPlaceId(null);
+    }
+  }, [detailPlaceId, places]);
+
   const handleTogglePlace = useCallback((id: string) => {
     setPlaces((prev) =>
       prev.map((p) => (p.id === id ? { ...p, selected: !p.selected } : p))
@@ -82,8 +100,11 @@ export default function PlanPage() {
   );
 
   const handleDetail = useCallback((id: string) => {
-    //TODO: Navigate to detail page — replace with router.push(`/plan/${id}`)
-    console.log("Detail:", id);
+    setDetailPlaceId(id);
+  }, []);
+
+  const handleCloseDetail = useCallback(() => {
+    setDetailPlaceId(null);
   }, []);
 
   return (
@@ -130,6 +151,14 @@ export default function PlanPage() {
         open={showTerms}
         onClose={() => setShowTerms(false)}
         onAccept={() => window.open("https://wa.me/628123456789", "_blank")}
+      />
+
+      <PlaceDetailModal
+        place={detailPlace}
+        categoryLabel={detailCategory?.label ?? detailPlace?.badge ?? ""}
+        categoryIcon={detailCategory?.icon ?? "📍"}
+        onClose={handleCloseDetail}
+        onToggleCart={handleTogglePlace}
       />
     </main>
   );
