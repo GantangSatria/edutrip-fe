@@ -9,6 +9,7 @@ import { PlacesGrid } from "@/components/plan/places-grid";
 import { PlanSummaryBar } from "@/components/plan/plan-summary-bar";
 import { TermsModal } from "@/components/plan/terms-modal";
 import { PlaceDetailModal } from "@/components/plan/place-detail-modal";
+import { CartDetailModal } from "@/components/plan/cart-detail-modal";
 
 import {
   planCategories,
@@ -20,6 +21,7 @@ import type { PlanFiltersState, PlanPlace, PlanTag } from "@/types/plan";
 
 export default function PlanPage() {
   const [showTerms, setShowTerms] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null);
   const [places, setPlaces] = useState<PlanPlace[]>(initialPlaces);
   const [tags, setTags] = useState<PlanTag[]>(initialTags);
@@ -62,6 +64,11 @@ export default function PlanPage() {
   const activeCities = useMemo(
     () => tags.filter((t) => t.active).map((t) => t.label),
     [tags]
+  );
+
+  const cartCityLabel = useMemo(
+    () => (activeCities.length > 0 ? activeCities.join(" & ") : "Belum dipilih"),
+    [activeCities]
   );
 
   const detailPlace = useMemo(
@@ -107,12 +114,24 @@ export default function PlanPage() {
     setDetailPlaceId(null);
   }, []);
 
+  const handleOpenCart = useCallback(() => {
+    setCartOpen(true);
+  }, []);
+
+  const handleCloseCart = useCallback(() => {
+    setCartOpen(false);
+  }, []);
+
+  const handleCartConsult = useCallback(() => {
+    setShowTerms(true);
+  }, []);
+
   return (
     <main className="min-h-screen bg-slate-100">
       <PlanHeader
         cartCount={selectedPlaces.length}
         onBack={() => history.back()}
-        onCart={() => console.log("open cart")}
+        onCart={handleOpenCart}
       />
 
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
@@ -143,7 +162,7 @@ export default function PlanPage() {
         totalUsd={totalUsd}
         people={filters.people}
         cities={activeCities}
-        onDetail={() => console.log("open detail cart")}
+        onOpenCart={handleOpenCart}
         onConsult={() => setShowTerms(true)}
       />
 
@@ -159,6 +178,19 @@ export default function PlanPage() {
         categoryIcon={detailCategory?.icon ?? "📍"}
         onClose={handleCloseDetail}
         onToggleCart={handleTogglePlace}
+      />
+
+      <CartDetailModal
+        open={cartOpen}
+        onClose={handleCloseCart}
+        selectedPlaces={selectedPlaces}
+        categories={planCategories}
+        people={filters.people}
+        days={filters.days}
+        cityLabel={cartCityLabel}
+        onRemoveItem={handleTogglePlace}
+        onAddMore={() => {}}
+        onConsultWa={handleCartConsult}
       />
     </main>
   );
