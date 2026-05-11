@@ -14,15 +14,6 @@ export function AdminDashboardHeader() {
         </div>
         <p className="mt-1 text-sm text-slate-500 sm:text-base">Kelola data universitas dan destinasi wisata</p>
       </div>
-      
-      <div className="flex items-center gap-3">
-        <button className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50 active:scale-95 sm:px-4">
-          Ekspor
-        </button>
-        <button className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-dark active:scale-95 sm:px-4">
-          + Tambah Data
-        </button>
-      </div>
     </div>
   );
 }

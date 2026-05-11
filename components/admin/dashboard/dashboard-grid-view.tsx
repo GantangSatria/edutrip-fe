@@ -11,9 +11,10 @@ type DataItem = {
 
 type DashboardGridViewProps = {
   data: DataItem[];
+  onEdit?: (itemId: string) => void;
 };
 
-export function DashboardGridView({ data }: DashboardGridViewProps) {
+export function DashboardGridView({ data, onEdit }: DashboardGridViewProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {data.length === 0 ? (
@@ -48,7 +49,7 @@ export function DashboardGridView({ data }: DashboardGridViewProps) {
             </div>
 
             <div className="mt-4 flex gap-2 pt-4 border-t border-slate-200">
-              <DashboardActionButtons itemId={item.id} layout="vertical" />
+              <DashboardActionButtons itemId={item.id} layout="vertical" onEdit={onEdit} />
             </div>
           </article>
         ))

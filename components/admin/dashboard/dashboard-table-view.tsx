@@ -11,9 +11,10 @@ type DataItem = {
 
 type DashboardTableViewProps = {
   data: DataItem[];
+  onEdit?: (itemId: string) => void;
 };
 
-export function DashboardTableView({ data }: DashboardTableViewProps) {
+export function DashboardTableView({ data, onEdit }: DashboardTableViewProps) {
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="space-y-3 p-4 sm:hidden">
@@ -42,7 +43,7 @@ export function DashboardTableView({ data }: DashboardTableViewProps) {
                 <span className="font-semibold text-amber-600">⭐ {item.rating}</span>
               </div>
               <div className="flex gap-2 pt-2">
-                <DashboardActionButtons itemId={item.id} />
+                <DashboardActionButtons itemId={item.id} onEdit={onEdit} />
               </div>
             </div>
           ))
@@ -88,7 +89,7 @@ export function DashboardTableView({ data }: DashboardTableViewProps) {
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex justify-center">
-                      <DashboardActionButtons itemId={item.id} />
+                      <DashboardActionButtons itemId={item.id} onEdit={onEdit} />
                     </div>
                   </td>
                 </tr>
