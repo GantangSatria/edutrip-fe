@@ -33,9 +33,9 @@ export function TermsModal({ open, onClose, onAccept }: TermsModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Reset checkbox whenever modal reopens
-  useEffect(() => {
-    if (open) setAgreed(false);
-  }, [open]);
+  // useEffect(() => {
+  //   if (open) setAgreed(false);
+  // }, [open]);
 
   // Lock body scroll while open
   useEffect(() => {
@@ -65,11 +65,13 @@ export function TermsModal({ open, onClose, onAccept }: TermsModalProps) {
     if (e.target === overlayRef.current) onClose();
   };
 
-  const handleAccept = () => {
-    if (!agreed) return;
-    onAccept();
-    onClose();
-  };
+const handleAccept = () => {
+  if (!agreed) return;
+
+  onAccept();
+  setAgreed(false);
+  onClose();
+};
 
   return (
     <div
@@ -99,7 +101,10 @@ export function TermsModal({ open, onClose, onAccept }: TermsModalProps) {
           </h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              setAgreed(false);
+              onClose();
+            }}
             aria-label="Tutup"
             className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
           >
@@ -156,7 +161,10 @@ export function TermsModal({ open, onClose, onAccept }: TermsModalProps) {
           <div className="flex gap-2.5">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                setAgreed(false);
+                onClose();
+              }}
               className="flex-1 rounded-xl border border-slate-200 py-2.5 text-xs font-medium text-slate-700 transition-all hover:bg-slate-50 active:scale-[0.98] sm:text-sm"
             >
               Batal

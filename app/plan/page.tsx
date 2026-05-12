@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 
 import { PlanHeader } from "@/components/plan/plan-header";
 import { PlanFilters } from "@/components/plan/plan-filters";
@@ -71,21 +71,22 @@ export default function PlanPage() {
     [activeCities]
   );
 
-  const detailPlace = useMemo(
-    () => (detailPlaceId ? places.find((p) => p.id === detailPlaceId) ?? null : null),
-    [places, detailPlaceId]
-  );
+  const detailPlace = useMemo(() => {
+    if (!detailPlaceId) return null;
+
+    return places.find((p) => p.id === detailPlaceId) ?? null;
+  }, [places, detailPlaceId]);
 
   const detailCategory = useMemo(() => {
     if (!detailPlace) return null;
     return planCategories.find((c) => c.id === detailPlace.categoryId) ?? null;
   }, [detailPlace]);
 
-  useEffect(() => {
-    if (detailPlaceId != null && !places.some((p) => p.id === detailPlaceId)) {
-      setDetailPlaceId(null);
-    }
-  }, [detailPlaceId, places]);
+  // useEffect(() => {
+  //   if (detailPlaceId != null && !places.some((p) => p.id === detailPlaceId)) {
+  //     setDetailPlaceId(null);
+  //   }
+  // }, [detailPlaceId, places]);
 
   const handleTogglePlace = useCallback((id: string) => {
     setPlaces((prev) =>

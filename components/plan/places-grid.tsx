@@ -17,22 +17,22 @@ function EmptyState() {
   );
 }
 
-function SkeletonCard() {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <div className="h-36 animate-pulse bg-slate-100 sm:h-40" />
-      <div className="p-3 space-y-2">
-        <div className="h-2.5 w-1/3 animate-pulse rounded bg-slate-100" />
-        <div className="h-3.5 w-2/3 animate-pulse rounded bg-slate-100" />
-        <div className="h-2.5 w-full animate-pulse rounded bg-slate-100" />
-        <div className="mt-3 flex gap-2">
-          <div className="h-8 flex-1 animate-pulse rounded-xl bg-slate-100" />
-          <div className="h-8 flex-1 animate-pulse rounded-xl bg-slate-100" />
-        </div>
-      </div>
-    </div>
-  );
-}
+// function SkeletonCard() {
+//   return (
+//     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+//       <div className="h-36 animate-pulse bg-slate-100 sm:h-40" />
+//       <div className="p-3 space-y-2">
+//         <div className="h-2.5 w-1/3 animate-pulse rounded bg-slate-100" />
+//         <div className="h-3.5 w-2/3 animate-pulse rounded bg-slate-100" />
+//         <div className="h-2.5 w-full animate-pulse rounded bg-slate-100" />
+//         <div className="mt-3 flex gap-2">
+//           <div className="h-8 flex-1 animate-pulse rounded-xl bg-slate-100" />
+//           <div className="h-8 flex-1 animate-pulse rounded-xl bg-slate-100" />
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 export function PlacesGrid({ places, onToggle, onDetail }: PlacesGridProps) {
   return (
