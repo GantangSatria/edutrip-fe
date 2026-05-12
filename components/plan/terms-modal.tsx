@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 type TermsModalProps = {
   open: boolean;
   onClose: () => void;
+  /** Dipanggil synchronous saat user klik Setuju — taruh window.open() di sini */
   onAccept: () => void;
 };
 
@@ -14,7 +15,7 @@ const TERMS = [
     items: [
       "Pengguna wajib mengisi data dengan benar meliputi: distrik rini, jumlah peserta, kota tujuan, dan pilihan destinasi.",
       "Hasil estimasi biaya yang ditampilkan merupakan perkiraan berdasarkan data yang tersedia; bukan harga final.",
-      "Sistem hanya memberikan perhitungan dan tidak menggangtikan layanan keamanan; tanggung jawab perjalanan.",
+      "Sistem hanya memberikan perhitungan dan tidak menggantikan layanan keamanan; tanggung jawab perjalanan.",
       "Hasil di-sistem akan disampaikan melalui WhatsApp untuk proses lanjutan hingga transaksi.",
     ],
   },
@@ -32,29 +33,14 @@ export function TermsModal({ open, onClose, onAccept }: TermsModalProps) {
   const [agreed, setAgreed] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Reset checkbox whenever modal reopens
-  // useEffect(() => {
-  //   if (open) setAgreed(false);
-  // }, [open]);
-
-  // Lock body scroll while open
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  // Close on Escape
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
@@ -65,13 +51,17 @@ export function TermsModal({ open, onClose, onAccept }: TermsModalProps) {
     if (e.target === overlayRef.current) onClose();
   };
 
-const handleAccept = () => {
-  if (!agreed) return;
+  const handleAccept = () => {
+    if (!agreed) return;
+    onAccept();
+    setAgreed(false);
+    onClose();
+  };
 
-  onAccept();
-  setAgreed(false);
-  onClose();
-};
+  const handleCancel = () => {
+    setAgreed(false);
+    onClose();
+  };
 
   return (
     <div
@@ -101,10 +91,7 @@ const handleAccept = () => {
           </h2>
           <button
             type="button"
-            onClick={() => {
-              setAgreed(false);
-              onClose();
-            }}
+            onClick={handleCancel}
             aria-label="Tutup"
             className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
           >
@@ -114,14 +101,13 @@ const handleAccept = () => {
           </button>
         </div>
 
-        {/* Scrollable body */}
+        {/* Body */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
           <p className="mb-4 text-xs leading-relaxed text-slate-500 sm:text-sm">
             Layanan yang disediakan oleh EduTrip Halal Jepun Web oleh tim
             pengembang untuk Zaid Tour memiliki syarat dan ketentuan sebagai
             berikut:
           </p>
-
           <div className="space-y-4">
             {TERMS.map((section) => (
               <div key={section.title}>
@@ -131,9 +117,7 @@ const handleAccept = () => {
                 <ol className="list-none space-y-1.5">
                   {section.items.map((item, i) => (
                     <li key={i} className="flex gap-2 text-xs leading-relaxed text-slate-600 sm:text-sm">
-                      <span className="mt-px shrink-0 font-medium text-slate-400">
-                        {i + 1}.
-                      </span>
+                      <span className="mt-px shrink-0 font-medium text-slate-400">{i + 1}.</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -153,18 +137,14 @@ const handleAccept = () => {
               className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-emerald-500"
             />
             <span className="text-xs leading-relaxed text-slate-600 sm:text-sm">
-              Saya telah membaca dan menyetujui syarat &amp; Ketentuan di
-              atas.
+              Saya telah membaca dan menyetujui syarat &amp; Ketentuan di atas.
             </span>
           </label>
 
           <div className="flex gap-2.5">
             <button
               type="button"
-              onClick={() => {
-                setAgreed(false);
-                onClose();
-              }}
+              onClick={handleCancel}
               className="flex-1 rounded-xl border border-slate-200 py-2.5 text-xs font-medium text-slate-700 transition-all hover:bg-slate-50 active:scale-[0.98] sm:text-sm"
             >
               Batal

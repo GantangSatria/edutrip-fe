@@ -25,9 +25,12 @@ export function Header() {
           <span className="text-[1.1rem] font-semibold sm:text-[1.25rem]">EDUTRIP Japan</span>
 
           <div className="hidden items-center gap-6 text-sm text-gray-500 md:flex">
-            <a href="#" className="px-2 py-1.5 transition-all hover:border-gray-500 hover:text-black">
+            <Link
+              href="/plan"
+              className="px-2 py-1.5 transition-all hover:text-black"
+            >
               Explore
-            </a>
+            </Link>
             <button
               type="button"
               onClick={openFlightModal}
@@ -58,9 +61,13 @@ export function Header() {
 
         {isOpen && (
           <div className="flex flex-col gap-3 px-4 pb-4 text-sm text-gray-500 md:hidden">
-            <a href="#" className="px-4 text-center transition-all hover:text-black">
+            <Link
+              href="/plan"
+              className="px-4 text-center transition-all hover:text-black"
+              onClick={() => setIsOpen(false)}
+            >
               Explore
-            </a>
+            </Link>
             <button
               type="button"
               onClick={openFlightModal}

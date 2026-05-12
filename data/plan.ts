@@ -17,6 +17,13 @@ export const planTags: PlanTag[] = [
   { id: "nara", label: "Nara", active: false },
 ];
 
+export const MASTER_RATES = {
+  hotelRatePerNight: 1_200_000,
+  transportRatePerDay: 350_000,
+  avgMealRate: 200_000,
+  flightPricePerPerson: 8_500_000,
+} as const;
+
 export const planPlaces: PlanPlace[] = [
   {
     id: "p1",
@@ -92,7 +99,7 @@ export const planPlaces: PlanPlace[] = [
     image:
       "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
     rating: 4.6,
-    price: 95,
+    price: 1660000  ,
     selected: false,
     categoryId: "hotel",
   },

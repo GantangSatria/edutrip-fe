@@ -11,10 +11,14 @@ import { TermsModal } from "@/components/plan/terms-modal";
 import { PlaceDetailModal } from "@/components/plan/place-detail-modal";
 import { CartDetailModal } from "@/components/plan/cart-detail-modal";
 
+import { openWhatsApp } from "@/lib/open-wa";
+import { calculateGrandTotal, buildWhatsAppUrl } from "@/lib/plan-calculator";
+
 import {
   planCategories,
   planTags as initialTags,
   planPlaces as initialPlaces,
+  MASTER_RATES,
 } from "@/data/plan";
 
 import type { PlanFiltersState, PlanPlace, PlanTag } from "@/types/plan";
@@ -35,11 +39,17 @@ export default function PlanPage() {
     activeCategory: "all",
   });
 
-  const activeTags = useMemo(() => tags.filter((t) => t.active).map((t) => t.id), [tags]);
+  // ─── Derived state ──────────────────────────────────────────────────────────
+
+  const activeTags = useMemo(
+    () => tags.filter((t) => t.active).map((t) => t.id),
+    [tags]
+  );
 
   const filteredPlaces = useMemo(() => {
     return places.filter((p) => {
-      const matchesCategory = activeCategory === "all" || p.categoryId === activeCategory;
+      const matchesCategory =
+        activeCategory === "all" || p.categoryId === activeCategory;
       const matchesCity =
         activeTags.length === 0 ||
         activeTags.some((tagId) => p.area.toLowerCase().includes(tagId));
@@ -47,10 +57,9 @@ export default function PlanPage() {
     });
   }, [places, activeCategory, activeTags]);
 
-  const selectedPlaces = useMemo(() => places.filter((p) => p.selected), [places]);
-  const totalUsd = useMemo(
-    () => selectedPlaces.reduce((sum, p) => sum + p.price, 0),
-    [selectedPlaces]
+  const selectedPlaces = useMemo(
+    () => places.filter((p) => p.selected),
+    [places]
   );
 
   const categoryCounts = useMemo(() => {
@@ -71,22 +80,67 @@ export default function PlanPage() {
     [activeCities]
   );
 
-  const detailPlace = useMemo(() => {
-    if (!detailPlaceId) return null;
+  const detailPlace = useMemo(
+    () => (detailPlaceId ? places.find((p) => p.id === detailPlaceId) ?? null : null),
+    [places, detailPlaceId]
+  );
 
-    return places.find((p) => p.id === detailPlaceId) ?? null;
-  }, [places, detailPlaceId]);
+  const detailCategory = useMemo(
+    () => (detailPlace ? planCategories.find((c) => c.id === detailPlace.categoryId) ?? null : null),
+    [detailPlace]
+  );
 
-  const detailCategory = useMemo(() => {
-    if (!detailPlace) return null;
-    return planCategories.find((c) => c.id === detailPlace.categoryId) ?? null;
-  }, [detailPlace]);
+  // ─── Grand total (IDR) ──────────────────────────────────────────────────────
 
-  // useEffect(() => {
-  //   if (detailPlaceId != null && !places.some((p) => p.id === detailPlaceId)) {
-  //     setDetailPlaceId(null);
-  //   }
-  // }, [detailPlaceId, places]);
+  const { grandTotal } = useMemo(
+    () =>
+        calculateGrandTotal({
+          people: filters.people,
+          days: filters.days,
+          hotelRatePerNight: MASTER_RATES.hotelRatePerNight,
+          transportRatePerDay: MASTER_RATES.transportRatePerDay,
+          totalDestinationTickets: selectedPlaces.reduce((s, p) => s + p.price, 0),
+          restaurantCount: selectedPlaces.filter((p) => p.categoryId === "restoran").length,
+          avgMealRate: MASTER_RATES.avgMealRate,
+          flightPricePerPerson: MASTER_RATES.flightPricePerPerson,
+        }),
+      [filters.people, filters.days, selectedPlaces]
+    );
+
+    // ─── WA redirect ────────────────────────────────────────────────────────────
+
+const handleOpenWhatsApp = useCallback(() => {
+  
+  const destinasi = selectedPlaces
+    .filter((p) => p.categoryId === "destinasi")
+    .map((p) => p.title);
+
+  const restoran = selectedPlaces
+    .filter((p) => p.categoryId === "restoran")
+    .map((p) => p.title);
+
+  const url = buildWhatsAppUrl({
+    cities: activeCities,
+    departureDate: filters.departure || "Belum ditentukan",
+    days: filters.days,
+    people: filters.people,
+    destinations: destinasi,
+    restaurants: restoran,
+    grandTotal,
+  });
+
+  openWhatsApp(url);
+}, [activeCities, filters.departure, filters.days, filters.people, selectedPlaces, grandTotal]);
+  
+  const handleTermsAccept = handleOpenWhatsApp;
+  
+  // Tombol konsultasi → buka Terms dulu
+  const handleConsultClick = useCallback(() => {
+    setCartOpen(false);
+    setShowTerms(true);
+  }, []);
+
+  // ─── Handlers ───────────────────────────────────────────────────────────────
 
   const handleTogglePlace = useCallback((id: string) => {
     setPlaces((prev) =>
@@ -107,25 +161,12 @@ export default function PlanPage() {
     []
   );
 
-  const handleDetail = useCallback((id: string) => {
-    setDetailPlaceId(id);
-  }, []);
+  const handleDetail = useCallback((id: string) => setDetailPlaceId(id), []);
+  const handleCloseDetail = useCallback(() => setDetailPlaceId(null), []);
+  const handleOpenCart = useCallback(() => setCartOpen(true), []);
+  const handleCloseCart = useCallback(() => setCartOpen(false), []);
 
-  const handleCloseDetail = useCallback(() => {
-    setDetailPlaceId(null);
-  }, []);
-
-  const handleOpenCart = useCallback(() => {
-    setCartOpen(true);
-  }, []);
-
-  const handleCloseCart = useCallback(() => {
-    setCartOpen(false);
-  }, []);
-
-  const handleCartConsult = useCallback(() => {
-    setShowTerms(true);
-  }, []);
+  // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <main className="min-h-screen bg-slate-100">
@@ -160,17 +201,17 @@ export default function PlanPage() {
 
       <PlanSummaryBar
         selectedCount={selectedPlaces.length}
-        totalUsd={totalUsd}
+        grandTotal={grandTotal}
         people={filters.people}
         cities={activeCities}
         onOpenCart={handleOpenCart}
-        onConsult={() => setShowTerms(true)}
+        onConsult={handleConsultClick}
       />
 
       <TermsModal
         open={showTerms}
         onClose={() => setShowTerms(false)}
-        onAccept={() => window.open("https://wa.me/628123456789", "_blank")}
+        onAccept={handleTermsAccept}
       />
 
       <PlaceDetailModal
@@ -189,9 +230,12 @@ export default function PlanPage() {
         people={filters.people}
         days={filters.days}
         cityLabel={cartCityLabel}
+        cities={activeCities}
+        departureDate={filters.departure || "Belum ditentukan"}
+        grandTotal={grandTotal}
         onRemoveItem={handleTogglePlace}
-        onAddMore={() => {}}
-        onConsultWa={handleCartConsult}
+        onAddMore={handleCloseCart}
+        onConsultWa={handleConsultClick}
       />
     </main>
   );
