@@ -7,7 +7,7 @@ import { Wisata } from "./wisata";
 export type PlanData = {
   wisata: Wisata[];
   hotel: Hotel[];
-  restoran_halal: RestoranHalal[];
+  restoran: RestoranHalal[];
   fasilitas_ibadah: FasilitasIbadah[];
   toko_oleh_oleh: TokoOlehOleh[];
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 
 import { PlanHeader } from "@/components/plan/plan-header";
 import { PlanFilters } from "@/components/plan/plan-filters";
@@ -13,31 +13,149 @@ import { CartDetailModal } from "@/components/plan/cart-detail-modal";
 
 import { openWhatsApp } from "@/lib/open-wa";
 import { calculateGrandTotal, buildWhatsAppUrl } from "@/lib/plan-calculator";
+import { getImageUrl } from "@/lib/image";
+import { planService } from "@/lib/service";
+import { useFetch } from "@/hooks/useFetch";
 
 import {
   planCategories,
-  planTags as initialTags,
-  planPlaces as initialPlaces,
   MASTER_RATES,
 } from "@/data/plan";
 
 import type { PlanFiltersState, PlanPlace, PlanTag } from "@/types/plan";
 
+// Transform API data into PlanPlace format
+function transformApiDataToPlaces(apiData: any): PlanPlace[] {
+  const places: PlanPlace[] = [];
+  let idCounter = 1;
+
+  // Transform wisata
+  apiData.wisata?.forEach((item: any) => {
+    places.push({
+      id: `wisata-${item.ID}`,
+      title: item.NamaWisata,
+      subtitle: item.KetWisata,
+      area: item.Kota,
+      badge: item.KategoriWisata,
+      image: getImageUrl(item.Foto, "wisata"),
+      rating: null,
+      price: item.TiketWisata,
+      selected: false,
+      categoryId: "wisata",
+    });
+  });
+
+  // Transform hotel
+  apiData.hotel?.forEach((item: any) => {
+    places.push({
+      id: `hotel-${item.ID}`,
+      title: item.NamaHotel,
+      subtitle: item.KetHotel,
+      area: item.Kota,
+      badge: item.TipeHotel,
+      image: getImageUrl(item.Foto, "hotel"),
+      rating: null,
+      price: item.HargaHotel,
+      selected: false,
+      categoryId: "hotel",
+    });
+  });
+
+  // Transform restoran
+  apiData.restoran?.forEach((item: any) => {
+    places.push({
+      id: `restoran-${item.ID}`,
+      title: item.NamaResto,
+      subtitle: item.KetResto,
+      area: item.Kota,
+      badge: "Kuliner Halal",
+      image: getImageUrl(item.Foto, "restoran"),
+      rating: null,
+      price: 0, // Restoran doesn't have price in API response
+      selected: false,
+      categoryId: "kuliner",
+    });
+  });
+
+  // Transform toko oleh-oleh
+  apiData.toko_oleh_oleh?.forEach((item: any) => {
+    places.push({
+      id: `oleh-${item.ID}`,
+      title: item.NamaBelanja,
+      subtitle: item.KetBelanja,
+      area: item.Kota,
+      badge: item.JenisBelanja,
+      image: getImageUrl(item.Foto, "toko"),
+      rating: null,
+      price: 0, // Toko doesn't have price
+      selected: false,
+      categoryId: "oleh",
+    });
+  });
+
+  // Transform fasilitas ibadah
+  apiData.fasilitas_ibadah?.forEach((item: any) => {
+    places.push({
+      id: `fasilitas-${item.ID}`,
+      title: item.NamaFasIbadah,
+      subtitle: item.LokasiFasIbadah,
+      area: item.Kota,
+      badge: item.TipeFas,
+      image: getImageUrl(item.Foto, "fasilitas"),
+      rating: null,
+      price: 0, // Fasilitas ibadah is free
+      selected: false,
+      categoryId: "wisata", // Treat as wisata category
+    });
+  });
+
+  return places;
+}
+
 export default function PlanPage() {
   const [showTerms, setShowTerms] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null);
-  const [places, setPlaces] = useState<PlanPlace[]>(initialPlaces);
-  const [tags, setTags] = useState<PlanTag[]>(initialTags);
+  const [places, setPlaces] = useState<PlanPlace[]>([]);
+  const [tags, setTags] = useState<PlanTag[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [filters, setFilters] = useState<PlanFiltersState>({
     departure: "",
     destination: "",
     days: 7,
     people: 2,
-    activeTags: initialTags.filter((t) => t.active).map((t) => t.id),
+    activeTags: [],
     activeCategory: "all",
   });
+
+  // Fetch plan data from API
+  const { data: apiData, loading, error } = useFetch(() => planService.getAll());
+
+  // Update places when API data arrives
+  useEffect(() => {
+    if (apiData) {
+      const transformedPlaces = transformApiDataToPlaces(apiData);
+      setPlaces(transformedPlaces);
+
+      // Extract unique cities from API data
+      const citiesSet = new Set<string>();
+      [apiData.wisata, apiData.hotel, apiData.restoran, apiData.toko_oleh_oleh, apiData.fasilitas_ibadah]
+        .flat()
+        .forEach((item: any) => {
+          if (item.Kota) citiesSet.add(item.Kota);
+        });
+
+      // Update tags with cities from API
+      if (citiesSet.size > 0) {
+        const newTags = Array.from(citiesSet).map((city, idx) => ({
+          id: city.toLowerCase(),
+          label: city,
+          active: idx < 2, // Activate first 2 cities
+        }));
+        setTags(newTags);
+      }
+    }
+  }, [apiData]);
 
   // ─── Derived state ──────────────────────────────────────────────────────────
 
@@ -191,11 +309,55 @@ const handleOpenWhatsApp = useCallback(() => {
             counts={categoryCounts}
             onSelect={setActiveCategory}
           />
-          <PlacesGrid
-            places={filteredPlaces}
-            onToggle={handleTogglePlace}
-            onDetail={handleDetail}
-          />
+
+          {/* Loading state */}
+          {loading ? (
+            <section>
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-xs text-slate-500">
+                  <span className="inline-block h-3 w-20 animate-pulse rounded bg-slate-200" />
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={`skel-${i}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <div className="h-36 animate-pulse bg-slate-100 sm:h-40" />
+                    <div className="space-y-2 p-3">
+                      <div className="h-2.5 w-1/3 animate-pulse rounded bg-slate-100" />
+                      <div className="h-3.5 w-2/3 animate-pulse rounded bg-slate-100" />
+                      <div className="h-2.5 w-full animate-pulse rounded bg-slate-100" />
+                      <div className="mt-3 flex gap-2">
+                        <div className="h-8 flex-1 animate-pulse rounded-xl bg-slate-100" />
+                        <div className="h-8 flex-1 animate-pulse rounded-xl bg-slate-100" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : error ? (
+            /* Error state */
+            <section>
+              <div className="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-red-200 bg-red-50 py-16 text-center">
+                <span className="text-3xl">⚠️</span>
+                <p className="mt-3 text-sm font-medium text-red-600">Gagal memuat data</p>
+                <p className="mt-1 text-xs text-red-400">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-4 rounded-xl bg-red-500 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-600"
+                >
+                  Coba Lagi
+                </button>
+              </div>
+            </section>
+          ) : (
+            <PlacesGrid
+              places={filteredPlaces}
+              onToggle={handleTogglePlace}
+              onDetail={handleDetail}
+            />
+          )}
         </div>
       </div>
 
