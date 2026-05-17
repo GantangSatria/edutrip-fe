@@ -1,3 +1,10 @@
+type DashboardStatsProps = {
+  counts?: {
+    total: number;
+  };
+  loading?: boolean;
+};
+
 type StatCard = {
   icon: string;
   label: string;
@@ -5,14 +12,14 @@ type StatCard = {
   color: string;
 };
 
-const stats: StatCard[] = [
-  { icon: "🏫", label: "Total Universitas", value: "6", color: "from-blue-50 to-blue-100" },
-  { icon: "👥", label: "User Aktif", value: "1.2K", color: "from-emerald-50 to-emerald-100" },
-  { icon: "📍", label: "Destinasi", value: "24", color: "from-amber-50 to-amber-100" },
-  { icon: "⭐", label: "Rating Avg", value: "4.6", color: "from-rose-50 to-rose-100" },
-];
+export function DashboardStats({ counts, loading }: DashboardStatsProps) {
+  const stats: StatCard[] = [
+    { icon: "📊", label: "Total Data", value: loading ? "..." : String(counts?.total ?? 0), color: "from-blue-50 to-blue-100" },
+    { icon: "🏫", label: "Kategori", value: "6", color: "from-emerald-50 to-emerald-100" },
+    { icon: "📍", label: "Kota", value: "3", color: "from-amber-50 to-amber-100" },
+    { icon: "⭐", label: "Status", value: "Aktif", color: "from-rose-50 to-rose-100" },
+  ];
 
-export function DashboardStats() {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 lg:gap-5">
       {stats.map((stat) => (

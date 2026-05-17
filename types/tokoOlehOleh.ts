@@ -1,14 +1,14 @@
 export interface TokoOlehOleh {
-  ID: number;
-  Kota: string;
-  NamaBelanja: string;
-  JenisBelanja: string;
-  KetBelanja: string;
-  AlamatBelanja: string;
-  Latitude: number;
-  Longitude: number;
-  Foto: string;
-  CreatedAt: string;
+  id: number;
+  kota: string;
+  nama_belanja: string;
+  jenis_belanja: string;
+  ket_belanja: string;
+  alamat_belanja: string;
+  latitude: number;
+  longitude: number;
+  foto: string;
+  created_at: string;
 }
  
 export interface TokoOlehOlehPayload {

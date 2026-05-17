@@ -27,19 +27,18 @@ import type { PlanFiltersState, PlanPlace, PlanTag } from "@/types/plan";
 // Transform API data into PlanPlace format
 function transformApiDataToPlaces(apiData: any): PlanPlace[] {
   const places: PlanPlace[] = [];
-  let idCounter = 1;
 
   // Transform wisata
   apiData.wisata?.forEach((item: any) => {
     places.push({
-      id: `wisata-${item.ID}`,
-      title: item.NamaWisata,
-      subtitle: item.KetWisata,
-      area: item.Kota,
-      badge: item.KategoriWisata,
-      image: getImageUrl(item.Foto, "wisata"),
+      id: `wisata-${item.id}`,
+      title: item.nama_wisata,
+      subtitle: item.ket_wisata,
+      area: item.kota,
+      badge: item.kategori_wisata,
+      image: getImageUrl(item.foto, "wisata"),
       rating: null,
-      price: item.TiketWisata,
+      price: item.tiket_wisata,
       selected: false,
       categoryId: "wisata",
     });
@@ -48,14 +47,14 @@ function transformApiDataToPlaces(apiData: any): PlanPlace[] {
   // Transform hotel
   apiData.hotel?.forEach((item: any) => {
     places.push({
-      id: `hotel-${item.ID}`,
-      title: item.NamaHotel,
-      subtitle: item.KetHotel,
-      area: item.Kota,
-      badge: item.TipeHotel,
-      image: getImageUrl(item.Foto, "hotel"),
+      id: `hotel-${item.id}`,
+      title: item.nama_hotel,
+      subtitle: item.ket_hotel,
+      area: item.kota,
+      badge: item.tipe_hotel,
+      image: getImageUrl(item.foto, "hotel"),
       rating: null,
-      price: item.HargaHotel,
+      price: item.harga_hotel,
       selected: false,
       categoryId: "hotel",
     });
@@ -64,12 +63,12 @@ function transformApiDataToPlaces(apiData: any): PlanPlace[] {
   // Transform restoran
   apiData.restoran?.forEach((item: any) => {
     places.push({
-      id: `restoran-${item.ID}`,
-      title: item.NamaResto,
-      subtitle: item.KetResto,
-      area: item.Kota,
+      id: `restoran-${item.id}`,
+      title: item.nama_resto,
+      subtitle: item.ket_resto,
+      area: item.kota,
       badge: "Kuliner Halal",
-      image: getImageUrl(item.Foto, "restoran"),
+      image: getImageUrl(item.foto, "restoran"),
       rating: null,
       price: 0, // Restoran doesn't have price in API response
       selected: false,
@@ -80,12 +79,12 @@ function transformApiDataToPlaces(apiData: any): PlanPlace[] {
   // Transform toko oleh-oleh
   apiData.toko_oleh_oleh?.forEach((item: any) => {
     places.push({
-      id: `oleh-${item.ID}`,
-      title: item.NamaBelanja,
-      subtitle: item.KetBelanja,
-      area: item.Kota,
-      badge: item.JenisBelanja,
-      image: getImageUrl(item.Foto, "toko"),
+      id: `oleh-${item.id}`,
+      title: item.nama_belanja,
+      subtitle: item.ket_belanja,
+      area: item.kota,
+      badge: item.jenis_belanja,
+      image: getImageUrl(item.foto, "toko"),
       rating: null,
       price: 0, // Toko doesn't have price
       selected: false,
@@ -96,12 +95,12 @@ function transformApiDataToPlaces(apiData: any): PlanPlace[] {
   // Transform fasilitas ibadah
   apiData.fasilitas_ibadah?.forEach((item: any) => {
     places.push({
-      id: `fasilitas-${item.ID}`,
-      title: item.NamaFasIbadah,
-      subtitle: item.LokasiFasIbadah,
-      area: item.Kota,
-      badge: item.TipeFas,
-      image: getImageUrl(item.Foto, "fasilitas"),
+      id: `fasilitas-${item.id}`,
+      title: item.nama_fas_ibadah,
+      subtitle: item.lokasi_fas_ibadah,
+      area: item.kota,
+      badge: item.tipe_fas,
+      image: getImageUrl(item.foto, "fasilitas"),
       rating: null,
       price: 0, // Fasilitas ibadah is free
       selected: false,
@@ -142,7 +141,7 @@ export default function PlanPage() {
       [apiData.wisata, apiData.hotel, apiData.restoran, apiData.toko_oleh_oleh, apiData.fasilitas_ibadah]
         .flat()
         .forEach((item: any) => {
-          if (item.Kota) citiesSet.add(item.Kota);
+          if (item.kota) citiesSet.add(item.kota);
         });
 
       // Update tags with cities from API

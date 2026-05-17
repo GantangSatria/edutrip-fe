@@ -6,21 +6,22 @@ type DashboardActionButtonsProps = {
   itemId: string;
   layout?: "horizontal" | "vertical";
   onEdit?: (itemId: string) => void;
+  onDelete?: (itemId: string) => Promise<void>;
 };
 
 export function DashboardActionButtons({
   itemId,
   layout = "horizontal",
   onEdit,
+  onDelete,
 }: DashboardActionButtonsProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
+    if (!onDelete) return;
     setIsDeleting(true);
     try {
-      await new Promise((r) => setTimeout(r, 600));
-      console.log("Deleted:", itemId);
-      // Wire to API when ready
+      await onDelete(itemId);
     } finally {
       setIsDeleting(false);
     }
