@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef } from "react";
 
 import type { PlanCategory, PlanPlace } from "@/types/plan";
-import { buildWhatsAppUrl, type WaMessageInput } from "./plan-summary-bar";
 
 // ─── Formatter ────────────────────────────────────────────────────────────────
 
@@ -26,8 +25,6 @@ type CartDetailModalProps = {
   people: number;
   days: number;
   cityLabel: string;
-  cities: string[];
-  departureDate: string;
   /** Grand total sudah dihitung di parent (IDR) — termasuk hotel, transport, dll */
   grandTotal: number;
   onRemoveItem: (id: string) => void;
@@ -202,8 +199,7 @@ export function CartDetailModal({
   people,
   days,
   cityLabel,
-  cities,
-  departureDate,
+
   grandTotal,
   onRemoveItem,
   onAddMore,
@@ -221,11 +217,6 @@ export function CartDetailModal({
     }));
   }, [categories, selectedPlaces]);
 
-  // Total tiket destinasi saja (untuk line item di cart) — sudah per orang
-  const ticketOnlyTotal = useMemo(
-    () => selectedPlaces.reduce((sum, p) => sum + p.price * people, 0),
-    [selectedPlaces, people]
-  );
 
   // Grand total dari prop (sudah termasuk hotel, transport, dll)
   const totalLabel = formatIDR(grandTotal);

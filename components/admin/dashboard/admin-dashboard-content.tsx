@@ -22,6 +22,12 @@ import {
   transportasiService,
 } from "@/lib/service";
 import { useFetch } from "@/hooks/useFetch";
+import type { WisataPayload } from "@/types/wisata";
+import type { HotelPayload } from "@/types/hotel";
+import type { RestoranHalalPayload } from "@/types/restoranHalal";
+import type { TokoOlehOlehPayload } from "@/types/tokoOlehOleh";
+import type { FasilitasIbadahPayload } from "@/types/fasilitasIbadah";
+import type { TransportasiPayload } from "@/types/transportasi";
 
 type ViewType = "table" | "grid";
 
@@ -44,34 +50,37 @@ const entityTabs: { id: EntityTab; label: string; icon: string }[] = [
   { id: "transportasi", label: "Transportasi", icon: "🚄" },
 ];
 
+// Common record type for raw API entities
+type EntityRecord = Record<string, unknown>;
+
 // Transform API data into common DataItem format
-function transformToDataItems(tab: EntityTab, data: any[]): DataItem[] {
+function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] {
   if (!data) return [];
 
   switch (tab) {
     case "wisata":
       return data.map((item) => ({
         id: String(item.id),
-        name: item.nama_wisata,
-        city: item.kota,
-        category: item.kategori_wisata,
+        name: String(item.nama_wisata),
+        city: String(item.kota),
+        category: String(item.kategori_wisata),
         rating: "-",
         status: "Aktif",
       }));
     case "hotel":
       return data.map((item) => ({
         id: String(item.id),
-        name: item.nama_hotel,
-        city: item.kota,
-        category: item.tipe_hotel,
+        name: String(item.nama_hotel),
+        city: String(item.kota),
+        category: String(item.tipe_hotel),
         rating: "-",
         status: "Aktif",
       }));
     case "restoran":
       return data.map((item) => ({
         id: String(item.id),
-        name: item.nama_resto,
-        city: item.kota,
+        name: String(item.nama_resto),
+        city: String(item.kota),
         category: "Kuliner Halal",
         rating: "-",
         status: "Aktif",
@@ -79,27 +88,27 @@ function transformToDataItems(tab: EntityTab, data: any[]): DataItem[] {
     case "toko":
       return data.map((item) => ({
         id: String(item.id),
-        name: item.nama_belanja,
-        city: item.kota,
-        category: item.jenis_belanja,
+        name: String(item.nama_belanja),
+        city: String(item.kota),
+        category: String(item.jenis_belanja),
         rating: "-",
         status: "Aktif",
       }));
     case "fasilitas":
       return data.map((item) => ({
         id: String(item.id),
-        name: item.nama_fas_ibadah,
-        city: item.kota,
-        category: item.tipe_fas,
+        name: String(item.nama_fas_ibadah),
+        city: String(item.kota),
+        category: String(item.tipe_fas),
         rating: "-",
         status: "Aktif",
       }));
     case "transportasi":
       return data.map((item) => ({
         id: String(item.id),
-        name: item.nama_transportasi,
-        city: item.rute || "-",
-        category: item.jenis_transportasi,
+        name: String(item.nama_transportasi),
+        city: String(item.rute || "-"),
+        category: String(item.jenis_transportasi),
         rating: "-",
         status: "Aktif",
       }));
@@ -145,38 +154,38 @@ async function deleteItem(tab: EntityTab, id: number) {
 }
 
 // Create via the right service
-async function createItem(tab: EntityTab, payload: any) {
+async function createItem(tab: EntityTab, payload: Record<string, string | number>) {
   switch (tab) {
     case "wisata":
-      return wisataService.create(payload);
+      return wisataService.create(payload as unknown as WisataPayload);
     case "hotel":
-      return hotelService.create(payload);
+      return hotelService.create(payload as unknown as HotelPayload);
     case "restoran":
-      return restoranHalalService.create(payload);
+      return restoranHalalService.create(payload as unknown as RestoranHalalPayload);
     case "toko":
-      return tokoOlehOlehService.create(payload);
+      return tokoOlehOlehService.create(payload as unknown as TokoOlehOlehPayload);
     case "fasilitas":
-      return fasilitasIbadahService.create(payload);
+      return fasilitasIbadahService.create(payload as unknown as FasilitasIbadahPayload);
     case "transportasi":
-      return transportasiService.create(payload);
+      return transportasiService.create(payload as unknown as TransportasiPayload);
   }
 }
 
 // Update via the right service
-async function updateItem(tab: EntityTab, id: number, payload: any) {
+async function updateItem(tab: EntityTab, id: number, payload: Record<string, string | number>) {
   switch (tab) {
     case "wisata":
-      return wisataService.update(id, payload);
+      return wisataService.update(id, payload as unknown as Partial<WisataPayload>);
     case "hotel":
-      return hotelService.update(id, payload);
+      return hotelService.update(id, payload as unknown as Partial<HotelPayload>);
     case "restoran":
-      return restoranHalalService.update(id, payload);
+      return restoranHalalService.update(id, payload as unknown as Partial<RestoranHalalPayload>);
     case "toko":
-      return tokoOlehOlehService.update(id, payload);
+      return tokoOlehOlehService.update(id, payload as unknown as Partial<TokoOlehOlehPayload>);
     case "fasilitas":
-      return fasilitasIbadahService.update(id, payload);
+      return fasilitasIbadahService.update(id, payload as unknown as Partial<FasilitasIbadahPayload>);
     case "transportasi":
-      return transportasiService.update(id, payload);
+      return transportasiService.update(id, payload as unknown as Partial<TransportasiPayload>);
   }
 }
 
@@ -198,11 +207,12 @@ export function AdminDashboardContent() {
 
   // Fetch data for active tab
   const { data: rawData, loading, error, refetch } = useFetch(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     () => getFetcher(activeTab)() as Promise<any>,
     [activeTab]
   );
 
-  const rawList: any[] = (rawData as any[]) || [];
+  const rawList: EntityRecord[] = (rawData as EntityRecord[]) || [];
   const currentData = transformToDataItems(activeTab, rawList);
 
   const tabLabel = entityTabs.find((t) => t.id === activeTab)?.label ?? "";
@@ -217,7 +227,7 @@ export function AdminDashboardContent() {
   };
 
   const handleOpenEditModal = (itemId: string) => {
-    const rawItem = rawList.find((d: any) => String(d.id) === itemId);
+    const rawItem = rawList.find((d) => String(d.id) === itemId);
     if (rawItem) {
       setModalMode("edit");
       setEditId(Number(itemId));

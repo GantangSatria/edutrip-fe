@@ -123,7 +123,7 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
 
 // ─── Helpers to convert API response → form data ─────────────────────────────
 
-export function apiItemToFormData(tab: EntityTab, raw: any): EntityFormData {
+export function apiItemToFormData(tab: EntityTab, raw: Record<string, unknown>): EntityFormData {
   if (!raw) return {};
 
   // Since API response and form fields now both use snake_case,
@@ -140,8 +140,8 @@ export function apiItemToFormData(tab: EntityTab, raw: any): EntityFormData {
 }
 
 // Convert form data to API payload (parse numbers)
-export function formDataToPayload(tab: EntityTab, data: EntityFormData): any {
-  const payload: any = { ...data };
+export function formDataToPayload(tab: EntityTab, data: EntityFormData): Record<string, string | number> {
+  const payload: Record<string, string | number> = { ...data };
 
   // Parse numeric fields
   const numericKeys: Record<EntityTab, string[]> = {

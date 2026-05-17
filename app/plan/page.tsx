@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 
 import { PlanHeader } from "@/components/plan/plan-header";
 import { PlanFilters } from "@/components/plan/plan-filters";
@@ -23,13 +23,19 @@ import {
 } from "@/data/plan";
 
 import type { PlanFiltersState, PlanPlace, PlanTag } from "@/types/plan";
+import type { PlanData } from "@/types/planData";
+import type { Wisata } from "@/types/wisata";
+import type { Hotel } from "@/types/hotel";
+import type { RestoranHalal } from "@/types/restoranHalal";
+import type { TokoOlehOleh } from "@/types/tokoOlehOleh";
+import type { FasilitasIbadah } from "@/types/fasilitasIbadah";
 
 // Transform API data into PlanPlace format
-function transformApiDataToPlaces(apiData: any): PlanPlace[] {
+function transformApiDataToPlaces(apiData: PlanData): PlanPlace[] {
   const places: PlanPlace[] = [];
 
   // Transform wisata
-  apiData.wisata?.forEach((item: any) => {
+  apiData.wisata?.forEach((item: Wisata) => {
     places.push({
       id: `wisata-${item.id}`,
       title: item.nama_wisata,
@@ -45,7 +51,7 @@ function transformApiDataToPlaces(apiData: any): PlanPlace[] {
   });
 
   // Transform hotel
-  apiData.hotel?.forEach((item: any) => {
+  apiData.hotel?.forEach((item: Hotel) => {
     places.push({
       id: `hotel-${item.id}`,
       title: item.nama_hotel,
@@ -61,7 +67,7 @@ function transformApiDataToPlaces(apiData: any): PlanPlace[] {
   });
 
   // Transform restoran
-  apiData.restoran?.forEach((item: any) => {
+  apiData.restoran?.forEach((item: RestoranHalal) => {
     places.push({
       id: `restoran-${item.id}`,
       title: item.nama_resto,
@@ -77,7 +83,7 @@ function transformApiDataToPlaces(apiData: any): PlanPlace[] {
   });
 
   // Transform toko oleh-oleh
-  apiData.toko_oleh_oleh?.forEach((item: any) => {
+  apiData.toko_oleh_oleh?.forEach((item: TokoOlehOleh) => {
     places.push({
       id: `oleh-${item.id}`,
       title: item.nama_belanja,
@@ -93,7 +99,7 @@ function transformApiDataToPlaces(apiData: any): PlanPlace[] {
   });
 
   // Transform fasilitas ibadah
-  apiData.fasilitas_ibadah?.forEach((item: any) => {
+  apiData.fasilitas_ibadah?.forEach((item: FasilitasIbadah) => {
     places.push({
       id: `fasilitas-${item.id}`,
       title: item.nama_fas_ibadah,
@@ -115,8 +121,6 @@ export default function PlanPage() {
   const [showTerms, setShowTerms] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null);
-  const [places, setPlaces] = useState<PlanPlace[]>([]);
-  const [tags, setTags] = useState<PlanTag[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [filters, setFilters] = useState<PlanFiltersState>({
     departure: "",
@@ -130,31 +134,42 @@ export default function PlanPage() {
   // Fetch plan data from API
   const { data: apiData, loading, error } = useFetch(() => planService.getAll());
 
-  // Update places when API data arrives
-  useEffect(() => {
-    if (apiData) {
-      const transformedPlaces = transformApiDataToPlaces(apiData);
-      setPlaces(transformedPlaces);
+  // Interactive state — selection & tag toggling
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [activeTagIds, setActiveTagIds] = useState<Set<string> | null>(null);
 
-      // Extract unique cities from API data
-      const citiesSet = new Set<string>();
-      [apiData.wisata, apiData.hotel, apiData.restoran, apiData.toko_oleh_oleh, apiData.fasilitas_ibadah]
-        .flat()
-        .forEach((item: any) => {
-          if (item.kota) citiesSet.add(item.kota);
-        });
+  // Derive places from API data + selection state
+  const places: PlanPlace[] = useMemo(() => {
+    if (!apiData) return [];
+    return transformApiDataToPlaces(apiData).map((p) => ({
+      ...p,
+      selected: selectedIds.has(p.id),
+    }));
+  }, [apiData, selectedIds]);
 
-      // Update tags with cities from API
-      if (citiesSet.size > 0) {
-        const newTags = Array.from(citiesSet).map((city, idx) => ({
-          id: city.toLowerCase(),
-          label: city,
-          active: idx < 2, // Activate first 2 cities
-        }));
-        setTags(newTags);
-      }
+  // Derive tags (cities) from API data + tag active state
+  const tags: PlanTag[] = useMemo(() => {
+    if (!apiData) return [];
+    const citiesSet = new Set<string>();
+    const allItems = [
+      ...(apiData.wisata || []),
+      ...(apiData.hotel || []),
+      ...(apiData.restoran || []),
+      ...(apiData.toko_oleh_oleh || []),
+      ...(apiData.fasilitas_ibadah || []),
+    ];
+    for (const item of allItems) {
+      if (item.kota) citiesSet.add(item.kota);
     }
-  }, [apiData]);
+    return Array.from(citiesSet).map((city, idx) => ({
+      id: city.toLowerCase(),
+      label: city,
+      // Default first 2 cities active; after user clicks, use activeTagIds
+      active: activeTagIds !== null
+        ? activeTagIds.has(city.toLowerCase())
+        : idx < 2,
+    }));
+  }, [apiData, activeTagIds]);
 
   // ─── Derived state ──────────────────────────────────────────────────────────
 
@@ -260,16 +275,23 @@ const handleOpenWhatsApp = useCallback(() => {
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
   const handleTogglePlace = useCallback((id: string) => {
-    setPlaces((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, selected: !p.selected } : p))
-    );
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }, []);
 
   const handleTagToggle = useCallback((id: string) => {
-    setTags((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, active: !t.active } : t))
-    );
-  }, []);
+    setActiveTagIds((prev) => {
+      // On first user interaction, initialize from current defaults
+      const current = prev !== null ? new Set(prev) : new Set(tags.filter((t) => t.active).map((t) => t.id));
+      if (current.has(id)) current.delete(id);
+      else current.add(id);
+      return current;
+    });
+  }, [tags]);
 
   const handleFilterChange = useCallback(
     (key: keyof PlanFiltersState, value: string | number) => {
@@ -391,8 +413,6 @@ const handleOpenWhatsApp = useCallback(() => {
         people={filters.people}
         days={filters.days}
         cityLabel={cartCityLabel}
-        cities={activeCities}
-        departureDate={filters.departure || "Belum ditentukan"}
         grandTotal={grandTotal}
         onRemoveItem={handleTogglePlace}
         onAddMore={handleCloseCart}
