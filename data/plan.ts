@@ -5,7 +5,7 @@ export const planCategories: PlanCategory[] = [
   { id: "wisata", label: "Wisata", icon: "🗺" },
   { id: "kuliner", label: "Kuliner Halal", icon: "🍜" },
   { id: "hotel", label: "Hotel", icon: "🏨" },
-  { id: "transport", label: "Transport", icon: "🚄" },
+  { id: "fasilitas", label: "Fasilitas Ibadah", icon: "🕌" },
   { id: "oleh", label: "Oleh-oleh", icon: "🎁" },
 ];
 

@@ -105,7 +105,7 @@ function transformApiDataToPlaces(apiData: any): PlanPlace[] {
       rating: null,
       price: 0, // Fasilitas ibadah is free
       selected: false,
-      categoryId: "wisata", // Treat as wisata category
+      categoryId: "fasilitas",
     });
   });
 

@@ -6,7 +6,7 @@ type ImageCategory =
   | "fasilitas"
   | "toko";
 
-const FALLBACK_IMAGE = "/images/placeholder.jpg";
+const FALLBACK_IMAGE = "/image/placeholder.jpg";
 
 export function getImageUrl(
   filename: string | null | undefined,
@@ -18,5 +18,5 @@ export function getImageUrl(
     return filename;
   }
 
-  return `/images/${category}/${filename}`;
+  return `/image/${category}/${filename}`;
 }
