@@ -29,7 +29,7 @@ function Counter({ value, min = 1, max = 30, unit, onDecrement, onIncrement }: C
         disabled={value <= min}
         className="flex h-6 w-6 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-sm transition hover:bg-slate-100 disabled:opacity-40"
       >
-        −
+        -
       </button>
       <span className="min-w-6 text-center text-sm font-semibold text-slate-800">{value}</span>
       <button
