@@ -14,7 +14,7 @@ import { CartDetailModal } from "@/components/plan/cart-detail-modal";
 import { openWhatsApp } from "@/lib/open-wa";
 import { calculateGrandTotal, buildWhatsAppUrl } from "@/lib/plan-calculator";
 import { getImageUrl } from "@/lib/image";
-import { planService } from "@/lib/service";
+import { planService, transportasiService } from "@/lib/service";
 import { useFetch } from "@/hooks/useFetch";
 
 import {
@@ -29,6 +29,7 @@ import type { Hotel } from "@/types/hotel";
 import type { RestoranHalal } from "@/types/restoranHalal";
 import type { TokoOlehOleh } from "@/types/tokoOlehOleh";
 import type { FasilitasIbadah } from "@/types/fasilitasIbadah";
+import type { Transportasi } from "@/types/transportasi";
 
 // Transform API data into PlanPlace format
 function transformApiDataToPlaces(apiData: PlanData): PlanPlace[] {
@@ -128,6 +129,21 @@ const subCategoryIcons: Record<string, string> = {
   "tempat-terkenal": "📍",
 };
 
+// Airport name labels for display
+const airportLabels: Record<string, string> = {
+  "CGK": "Jakarta Soekarno-Hatta (CGK)",
+  "SUB": "Surabaya Juanda (SUB)",
+  "DPS": "Bali Ngurah Rai (DPS)",
+  "UPG": "Makassar (UPG)",
+  "YIA": "Yogyakarta (YIA)",
+  "BPN": "Balikpapan (BPN)",
+  "KNO": "Medan Kualanamu (KNO)",
+  "NRT": "Tokyo Narita (NRT)",
+  "HND": "Tokyo Haneda (HND)",
+  "KIX": "Osaka Kansai (KIX)",
+  "ITM": "Osaka Itami (ITM)",
+};
+
 export default function PlanPage() {
   const [showTerms, setShowTerms] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -144,6 +160,78 @@ export default function PlanPage() {
 
   // Fetch plan data from API
   const { data: apiData, loading, error } = useFetch(() => planService.getAll());
+
+  // Fetch transportasi (flight) data
+  const { data: transportasiData } = useFetch(() => transportasiService.getAll());
+  const flights: Transportasi[] = useMemo(
+    () => transportasiData || [],
+    [transportasiData]
+  );
+
+  // ─── Dynamic airports derived from flight data ─────────────────────────────
+
+  const departureAirports = useMemo(() => {
+    const depSet = new Set<string>();
+    for (const f of flights) {
+      const parts = f.kode_bandara.split(" - ");
+      if (parts.length === 2) depSet.add(parts[0].trim());
+    }
+    const sorted = Array.from(depSet).sort();
+    return [
+      { value: "", label: "Pilih Bandara" },
+      ...sorted.map((code) => ({
+        value: code,
+        label: airportLabels[code] || code,
+      })),
+    ];
+  }, [flights]);
+
+  const destinationAirports = useMemo(() => {
+    const destSet = new Set<string>();
+    // If a departure is selected, only show destinations reachable from it
+    for (const f of flights) {
+      const parts = f.kode_bandara.split(" - ");
+      if (parts.length === 2) {
+        const dep = parts[0].trim();
+        const dest = parts[1].trim();
+        if (!filters.departure || dep === filters.departure) {
+          destSet.add(dest);
+        }
+      }
+    }
+    const sorted = Array.from(destSet).sort();
+    return [
+      { value: "", label: "Pilih Bandara" },
+      ...sorted.map((code) => ({
+        value: code,
+        label: airportLabels[code] || code,
+      })),
+    ];
+  }, [flights, filters.departure]);
+
+  // ─── Matched flights & cheapest price ──────────────────────────────────────
+
+  const matchedFlights = useMemo(() => {
+    if (!filters.departure || !filters.destination) return [];
+    const route = `${filters.departure} - ${filters.destination}`;
+    return flights.filter((f) => f.kode_bandara === route);
+  }, [flights, filters.departure, filters.destination]);
+
+  const flightInfo = useMemo(() => {
+    if (matchedFlights.length === 0) return null;
+    const sorted = [...matchedFlights].sort(
+      (a, b) => a.harga_transportasi_idr - b.harga_transportasi_idr
+    );
+    const cheapest = sorted[0];
+    return {
+      cheapest: cheapest.harga_transportasi_idr,
+      airline: cheapest.nama_transportasi,
+      note: cheapest.ket_transportasi,
+    };
+  }, [matchedFlights]);
+
+  // The actual flight price per person to use in grand total
+  const flightPricePerPerson = flightInfo?.cheapest ?? MASTER_RATES.flightPricePerPerson;
 
   // Interactive state — selection & tag toggling
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -304,9 +392,9 @@ export default function PlanPage() {
           totalDestinationTickets: selectedPlaces.reduce((s, p) => s + p.price, 0),
           restaurantCount: selectedPlaces.filter((p) => p.categoryId === "restoran").length,
           avgMealRate: MASTER_RATES.avgMealRate,
-          flightPricePerPerson: MASTER_RATES.flightPricePerPerson,
+          flightPricePerPerson,
         }),
-      [filters.people, filters.days, selectedPlaces]
+      [filters.people, filters.days, selectedPlaces, flightPricePerPerson]
     );
 
     // ─── WA redirect ────────────────────────────────────────────────────────────
@@ -389,6 +477,9 @@ const handleOpenWhatsApp = useCallback(() => {
         <PlanFilters
           filters={filters}
           tags={tags}
+          departureAirports={departureAirports}
+          destinationAirports={destinationAirports}
+          flightInfo={flightInfo}
           onTagToggle={handleTagToggle}
           onFilterChange={handleFilterChange}
         />

@@ -1,9 +1,16 @@
 import type { PlanFiltersState, PlanTag } from "@/types/plan";
-import { departureAirports, destinationAirports } from "@/data/plan";
+
+type AirportOption = {
+  value: string;
+  label: string;
+};
 
 type PlanFiltersProps = {
   filters: PlanFiltersState;
   tags: PlanTag[];
+  departureAirports: AirportOption[];
+  destinationAirports: AirportOption[];
+  flightInfo?: { cheapest: number; airline: string; note: string } | null;
   onTagToggle: (id: string) => void;
   onFilterChange: (key: keyof PlanFiltersState, value: string | number) => void;
 };
@@ -45,7 +52,24 @@ function Counter({ value, min = 1, max = 30, unit, onDecrement, onIncrement }: C
   );
 }
 
-export function PlanFilters({ filters, tags, onTagToggle, onFilterChange }: PlanFiltersProps) {
+function formatIDR(amount: number): string {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+export function PlanFilters({
+  filters,
+  tags,
+  departureAirports,
+  destinationAirports,
+  flightInfo,
+  onTagToggle,
+  onFilterChange,
+}: PlanFiltersProps) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       {/* City tags */}
@@ -132,6 +156,20 @@ export function PlanFilters({ filters, tags, onTagToggle, onFilterChange }: Plan
           />
         </div>
       </div>
+
+      {/* Flight match info */}
+      {flightInfo && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-xs text-emerald-700 sm:text-sm">
+          <svg className="h-4 w-4 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 2 11 13" /><path d="m22 2-7 20-4-9-9-4 20-7z" />
+          </svg>
+          <span className="font-semibold">{flightInfo.airline}</span>
+          <span className="text-emerald-600">mulai {formatIDR(flightInfo.cheapest)}/orang</span>
+          {flightInfo.note && (
+            <span className="text-emerald-500">• {flightInfo.note}</span>
+          )}
+        </div>
+      )}
     </section>
   );
 }
