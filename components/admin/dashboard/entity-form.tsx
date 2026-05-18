@@ -107,17 +107,12 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
   transportasi: [
     { key: "nama_transportasi", label: "Nama Transportasi", type: "text", placeholder: "Nama transportasi", required: true, half: true },
     { key: "jenis_transportasi", label: "Jenis", type: "select", required: true, half: true, options: [
-      { value: "", label: "Pilih Jenis" },
-      { value: "Kereta", label: "Kereta" },
-      { value: "Bus", label: "Bus" },
       { value: "Pesawat", label: "Pesawat" },
-      { value: "Shinkansen", label: "Shinkansen" },
     ]},
     { key: "rute", label: "Rute", type: "text", placeholder: "Tokyo - Osaka", required: true, half: true },
     { key: "kode_bandara", label: "Kode Bandara", type: "text", placeholder: "NRT", half: true },
     { key: "harga_transportasi_idr", label: "Harga (IDR)", type: "number", placeholder: "0", required: true },
     { key: "ket_transportasi", label: "Keterangan", type: "textarea", placeholder: "Deskripsi transportasi..." },
-    { key: "foto", label: "Foto", type: "file" },
   ],
 };
 
@@ -265,6 +260,16 @@ export function EntityForm({
       if (fileToUpload) {
         const uploadedFilename = await uploadFileToSupabase(fileToUpload);
         finalData["foto"] = uploadedFilename;
+
+        // If in edit mode and there was an old photo, delete it to prevent orphaned files
+        if (mode === "edit" && initialData?.foto && initialData.foto !== uploadedFilename) {
+          try {
+            const { deleteImageFromSupabase } = await import("@/lib/supabase");
+            await deleteImageFromSupabase(entityTab, initialData.foto);
+          } catch (e) {
+            console.warn("Failed to delete old image:", e);
+          }
+        }
       }
 
       await onSubmit(finalData);
