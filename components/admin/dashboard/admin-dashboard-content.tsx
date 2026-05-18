@@ -38,7 +38,6 @@ type DataItem = {
   name: string;
   city: string;
   category: string;
-  rating: string;
   status: string;
 };
 
@@ -65,7 +64,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_wisata),
         city: String(item.kota),
         category: String(item.kategori_wisata),
-        rating: "-",
         status: "Aktif",
       }));
     case "hotel":
@@ -74,7 +72,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_hotel),
         city: String(item.kota),
         category: String(item.tipe_hotel),
-        rating: "-",
         status: "Aktif",
       }));
     case "restoran":
@@ -83,7 +80,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_resto),
         city: String(item.kota),
         category: "Kuliner Halal",
-        rating: "-",
         status: "Aktif",
       }));
     case "toko":
@@ -92,7 +88,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_belanja),
         city: String(item.kota),
         category: String(item.jenis_belanja),
-        rating: "-",
         status: "Aktif",
       }));
     case "fasilitas":
@@ -101,7 +96,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_fas_ibadah),
         city: String(item.kota),
         category: String(item.tipe_fas),
-        rating: "-",
         status: "Aktif",
       }));
     case "transportasi":
@@ -110,7 +104,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_transportasi),
         city: String(item.rute || "-"),
         category: String(item.jenis_transportasi),
-        rating: "-",
         status: "Aktif",
       }));
     default:
@@ -350,16 +343,18 @@ export function AdminDashboardContent() {
               </button>
             </div>
 
-            <button
-              onClick={handleOpenCreateModal}
-              className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-dark active:scale-95 w-full sm:w-auto"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              <span>Tambah Data</span>
-            </button>
+            {activeTab !== "transportasi" && (
+              <button
+                onClick={handleOpenCreateModal}
+                className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-dark active:scale-95 w-full sm:w-auto"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <span>Tambah Data</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -391,9 +386,17 @@ export function AdminDashboardContent() {
             </button>
           </div>
         ) : viewType === "table" ? (
-          <DashboardTableView data={currentData} onEdit={handleOpenEditModal} onDelete={handleDelete} />
+          <DashboardTableView 
+            data={currentData} 
+            onEdit={handleOpenEditModal} 
+            onDelete={activeTab === "transportasi" ? undefined : handleDelete} 
+          />
         ) : (
-          <DashboardGridView data={currentData} onEdit={handleOpenEditModal} onDelete={handleDelete} />
+          <DashboardGridView 
+            data={currentData} 
+            onEdit={handleOpenEditModal} 
+            onDelete={activeTab === "transportasi" ? undefined : handleDelete} 
+          />
         )}
       </div>
 

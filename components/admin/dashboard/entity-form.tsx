@@ -198,11 +198,55 @@ export function EntityForm({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     for (const f of fields) {
+      const val = formData[f.key];
+      const strVal = (val ?? "").toString().trim();
+
       // If mode is create and file is required, check if file is selected
-      if (f.type === "file" && f.required && !fileToUpload && !(formData[f.key] ?? "").toString().trim()) {
+      if (f.type === "file" && f.required && !fileToUpload && !strVal) {
         newErrors[f.key] = `${f.label} wajib diupload`;
-      } else if (f.type !== "file" && f.required && !(formData[f.key] ?? "").toString().trim()) {
+        continue;
+      } else if (f.type !== "file" && f.required && !strVal) {
         newErrors[f.key] = `${f.label} wajib diisi`;
+        continue;
+      }
+
+      if (!strVal) continue;
+
+      // Harga & Tiket validation
+      if (f.key.toLowerCase().includes("harga") || f.key.toLowerCase().includes("tiket")) {
+        const numVal = Number(strVal);
+        if (isNaN(numVal)) {
+          newErrors[f.key] = `${f.label} harus berupa angka`;
+        } else if (numVal < 0) {
+          newErrors[f.key] = `${f.label} tidak boleh negatif`;
+        } else if (strVal.length > 10) {
+          newErrors[f.key] = `${f.label} maksimal 10 digit`;
+        }
+      }
+
+      // Latitude validation
+      if (f.key.toLowerCase().includes("latitude")) {
+        const numVal = Number(strVal);
+        if (isNaN(numVal) || numVal < -90 || numVal > 90) {
+          newErrors[f.key] = "Latitude harus berupa angka antara -90 dan 90";
+        }
+      }
+
+      // Longitude validation
+      if (f.key.toLowerCase().includes("longitude")) {
+        const numVal = Number(strVal);
+        if (isNaN(numVal) || numVal < -180 || numVal > 180) {
+          newErrors[f.key] = "Longitude harus berupa angka antara -180 dan 180";
+        }
+      }
+
+      // Kode Bandara validation
+      if (f.key.toLowerCase().includes("kode_bandara")) {
+        if (strVal.length > 4) {
+          newErrors[f.key] = "Kode bandara maksimal 4 karakter";
+        } else if (!/^[A-Z]+$/.test(strVal)) {
+          newErrors[f.key] = "Kode bandara hanya boleh berisi huruf kapital";
+        }
       }
     }
     setErrors(newErrors);
@@ -304,52 +348,68 @@ export function EntityForm({
             <div key={field.key}>
               <label className={labelClass}>{field.label}</label>
 
-              {field.type === "select" ? (
-                <select
-                  className={inputClass}
-                  value={formData[field.key] ?? ""}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
-                  disabled={loading || mode === "view"}
-                >
-                  {field.options?.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              ) : field.type === "textarea" ? (
-                <textarea
-                  className={textareaClass}
-                  placeholder={field.placeholder}
-                  rows={3}
-                  value={formData[field.key] ?? ""}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
-                  disabled={loading || mode === "view"}
-                />
-              ) : field.type === "file" ? (
-                <div className="flex flex-col gap-2">
-                   <input
-                     type="file"
-                     accept="image/*"
-                     className={`${inputClass} !py-2`}
-                     onChange={handleFileChange}
-                     disabled={loading || mode === "view"}
-                   />
-                   {formData[field.key] && !fileToUpload && (
-                     <p className="text-xs text-slate-500">File saat ini: {formData[field.key]}</p>
-                   )}
-                </div>
-              ) : (
-                <input
-                  type={field.type}
-                  className={inputClass}
-                  placeholder={field.placeholder}
-                  step={field.type === "number" ? "any" : undefined}
-                  value={formData[field.key] ?? ""}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
-                  disabled={loading || mode === "view"}
-                />
-              )}
+              {(() => {
+                const isTransportasiLocked = entityTab === "transportasi" && 
+                  mode === "edit" && 
+                  (field.key === "kode_bandara" || field.key === "rute" || field.key === "jenis_transportasi");
+                
+                const isFieldDisabled = loading || mode === "view" || isTransportasiLocked;
+
+                if (field.type === "select") {
+                  return (
+                    <select
+                      className={inputClass}
+                      value={formData[field.key] ?? ""}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={isFieldDisabled}
+                    >
+                      {field.options?.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  );
+                } else if (field.type === "textarea") {
+                  return (
+                    <textarea
+                      className={textareaClass}
+                      placeholder={field.placeholder}
+                      rows={3}
+                      value={formData[field.key] ?? ""}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={isFieldDisabled}
+                    />
+                  );
+                } else if (field.type === "file") {
+                  return (
+                    <div className="flex flex-col gap-2">
+                       <input
+                         type="file"
+                         accept="image/*"
+                         className={`${inputClass} !py-2`}
+                         onChange={handleFileChange}
+                         disabled={isFieldDisabled}
+                       />
+                       {formData[field.key] && !fileToUpload && (
+                         <p className="text-xs text-slate-500">File saat ini: {formData[field.key]}</p>
+                       )}
+                    </div>
+                  );
+                } else {
+                  return (
+                    <input
+                      type={field.type}
+                      className={inputClass}
+                      placeholder={field.placeholder}
+                      step={field.type === "number" ? "any" : undefined}
+                      value={formData[field.key] ?? ""}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={isFieldDisabled}
+                    />
+                  );
+                }
+              })()}
 
               {errors[field.key] && (
                 <p className="mt-1.5 text-xs text-rose-600 sm:text-sm">{errors[field.key]}</p>
