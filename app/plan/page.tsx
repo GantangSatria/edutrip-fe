@@ -414,11 +414,11 @@ export default function PlanPage() {
 const handleOpenWhatsApp = useCallback(() => {
   
   const destinasi = selectedPlaces
-    .filter((p) => p.categoryId === "destinasi")
+    .filter((p) => p.categoryId === "wisata")
     .map((p) => p.title);
 
   const restoran = selectedPlaces
-    .filter((p) => p.categoryId === "restoran")
+    .filter((p) => p.categoryId === "kuliner")
     .map((p) => p.title);
 
   const url = buildWhatsAppUrl({

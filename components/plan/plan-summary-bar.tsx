@@ -113,23 +113,25 @@ export function buildWhatsAppUrl(input: WaMessageInput): string {
       ? restaurants.map((r) => `   - ${r}`).join("\n")
       : "   - (belum dipilih)";
 
-  const message = `Halo Admin Zaid Tour,
-Saya tertarik untuk konsultasi rencana perjalanan EduTrip Jepang.
-Berikut rincian dari kalkulator website:
-
-📍 Kota Tujuan: ${cityLabel}
-🗓️ Rencana Keberangkatan: ${departureDate}
-⏳ Durasi: ${days} Hari ${nights} Malam
-👥 Jumlah Peserta: ${people} Orang
-🎒 Destinasi Pilihan:
-${destinationLines}
-🍽️ Restoran Pilihan (Wishlist):
-${restaurantLines}
-(Catatan: Biaya penginapan dan transportasi harian otomatis termasuk dalam estimasi paket)
-💰 Estimasi Biaya Total: *${formatIDR(grandTotal)}*
-
-Saya telah membaca dan menyetujui Syarat & Ketentuan layanan.
-Mohon informasi lebih lanjut mengenai paket. Terima kasih!`;
+  const message = [
+    "Halo Admin Zaid Tour,",
+    "Saya tertarik untuk konsultasi rencana perjalanan EduTrip Jepang.",
+    "Berikut rincian dari kalkulator website:",
+    "",
+    `- Kota Tujuan: ${cityLabel}`,
+    `- Rencana Keberangkatan: ${departureDate}`,
+    `- Durasi: ${days} Hari ${nights} Malam`,
+    `- Jumlah Peserta: ${people} Orang`,
+    `- Destinasi Pilihan:`,
+    destinationLines,
+    `- Restoran Pilihan (Wishlist):`,
+    restaurantLines,
+    "(Catatan: Biaya penginapan dan transportasi harian otomatis termasuk dalam estimasi paket)",
+    `- Estimasi Biaya Total: *${formatIDR(grandTotal)}*`,
+    "",
+    "Saya telah membaca dan menyetujui Syarat & Ketentuan layanan.",
+    "Mohon informasi lebih lanjut mengenai paket. Terima kasih!",
+  ].join("\n");
 
   return `https://wa.me/${WA_ADMIN_NUMBER}?text=${encodeURIComponent(message)}`;
 }
