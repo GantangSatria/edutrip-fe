@@ -18,5 +18,11 @@ export function getImageUrl(
     return filename;
   }
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl) {
+    // Return supabase public URL for edutrip-images bucket
+    return `${supabaseUrl}/storage/v1/object/public/edutrip-images/${category}/${filename}`;
+  }
+
   return `/image/${category}/${filename}`;
 }

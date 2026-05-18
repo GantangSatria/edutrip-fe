@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "staticmap.openstreetmap.de",
       },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+      },
     ],
   },
 };

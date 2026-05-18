@@ -11,7 +11,7 @@ export type EntityFormData = Record<string, string>;
 type FieldDef = {
   key: string;
   label: string;
-  type: "text" | "number" | "textarea" | "select";
+  type: "text" | "number" | "textarea" | "select" | "file";
   placeholder?: string;
   required?: boolean;
   options?: { value: string; label: string }[];
@@ -45,7 +45,7 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
     { key: "latitude", label: "Latitude", type: "number", placeholder: "0.0", required: true, half: true },
     { key: "longitude", label: "Longitude", type: "number", placeholder: "0.0", required: true, half: true },
     { key: "ket_wisata", label: "Keterangan", type: "textarea", placeholder: "Deskripsi wisata...", required: true },
-    { key: "foto", label: "Nama File Foto", type: "text", placeholder: "nama_foto.jpg" },
+    { key: "foto", label: "Foto", type: "file" },
   ],
   hotel: [
     { key: "nama_hotel", label: "Nama Hotel", type: "text", placeholder: "Nama hotel", required: true, half: true },
@@ -61,7 +61,7 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
     { key: "latitude", label: "Latitude", type: "number", placeholder: "0.0", required: true, half: true },
     { key: "longitude", label: "Longitude", type: "number", placeholder: "0.0", required: true, half: true },
     { key: "ket_hotel", label: "Keterangan", type: "textarea", placeholder: "Fasilitas dan catatan hotel..." },
-    { key: "foto", label: "Nama File Foto", type: "text", placeholder: "nama_foto.jpg" },
+    { key: "foto", label: "Foto", type: "file" },
   ],
   restoran: [
     { key: "nama_resto", label: "Nama Restoran", type: "text", placeholder: "Nama restoran", required: true, half: true },
@@ -71,7 +71,7 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
     { key: "longitude", label: "Longitude", type: "number", placeholder: "0.0", required: true, half: true },
     { key: "harga_resto", label: "Kisaran Harga", type: "text", placeholder: "Rp100.000 - Rp300.000", required: true },
     { key: "ket_resto", label: "Keterangan", type: "textarea", placeholder: "Deskripsi restoran..." },
-    { key: "foto", label: "Nama File Foto", type: "text", placeholder: "nama_foto.jpg" },
+    { key: "foto", label: "Foto", type: "file" },
   ],
   toko: [
     { key: "nama_belanja", label: "Nama Toko", type: "text", placeholder: "Nama toko oleh-oleh", required: true, half: true },
@@ -89,7 +89,7 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
     { key: "alamat_belanja", label: "Alamat", type: "text", placeholder: "Alamat toko", required: true },
     { key: "latitude", label: "Latitude", type: "number", placeholder: "0.0", required: true, half: true },
     { key: "longitude", label: "Longitude", type: "number", placeholder: "0.0", required: true, half: true },
-    { key: "foto", label: "Nama File Foto", type: "text", placeholder: "nama_foto.jpg" },
+    { key: "foto", label: "Foto", type: "file" },
   ],
   fasilitas: [
     { key: "nama_fas_ibadah", label: "Nama Fasilitas", type: "text", placeholder: "Nama masjid / mushola", required: true, half: true },
@@ -102,7 +102,7 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
     { key: "lokasi_fas_ibadah", label: "Lokasi Detail", type: "text", placeholder: "Lantai 3, Gedung A...", required: true, half: true },
     { key: "latitude", label: "Latitude", type: "number", placeholder: "0.0", required: true, half: true },
     { key: "longitude", label: "Longitude", type: "number", placeholder: "0.0", required: true, half: true },
-    { key: "foto", label: "Nama File Foto", type: "text", placeholder: "nama_foto.jpg" },
+    { key: "foto", label: "Foto", type: "file" },
   ],
   transportasi: [
     { key: "nama_transportasi", label: "Nama Transportasi", type: "text", placeholder: "Nama transportasi", required: true, half: true },
@@ -117,7 +117,7 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
     { key: "kode_bandara", label: "Kode Bandara", type: "text", placeholder: "NRT", half: true },
     { key: "harga_transportasi_idr", label: "Harga (IDR)", type: "number", placeholder: "0", required: true },
     { key: "ket_transportasi", label: "Keterangan", type: "textarea", placeholder: "Deskripsi transportasi..." },
-    { key: "foto", label: "Nama File Foto", type: "text", placeholder: "nama_foto.jpg" },
+    { key: "foto", label: "Foto", type: "file" },
   ],
 };
 
@@ -198,10 +198,15 @@ export function EntityForm({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     for (const f of fields) {
-      if (f.required && !(formData[f.key] ?? "").toString().trim()) {
+      // If mode is create and file is required, check if file is selected
+      if (f.type === "file" && f.required && !fileToUpload && !(formData[f.key] ?? "").toString().trim()) {
+        newErrors[f.key] = `${f.label} wajib diupload`;
+      } else if (f.type !== "file" && f.required && !(formData[f.key] ?? "").toString().trim()) {
         newErrors[f.key] = `${f.label} wajib diisi`;
       }
     }
@@ -214,12 +219,57 @@ export function EntityForm({
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: "" }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFileToUpload(e.target.files[0]);
+      if (errors["foto"]) setErrors((prev) => ({ ...prev, foto: "" }));
+    }
+  };
+
+  const uploadFileToSupabase = async (file: File): Promise<string> => {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+    // Map entityTab to bucket folder name. We use the entityTab name except for some matches
+    // tab values: "wisata" | "hotel" | "restoran" | "toko" | "fasilitas" | "transportasi"
+    const filePath = `${entityTab}/${fileName}`;
+
+    // Dynamic import to avoid SSR issues if any, but since it's "use client", regular import is fine.
+    // We'll import supabase dynamically inside the function to keep the component simple.
+    const { supabase } = await import("@/lib/supabase");
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+       console.warn("Supabase URL not set, skipping upload logic");
+       return file.name;
+    }
+
+    const { error } = await supabase.storage
+      .from("edutrip-images")
+      .upload(filePath, file);
+
+    if (error) {
+      throw new Error(`Upload gagal: ${error.message}`);
+    }
+
+    // Return just the filename since getImageUrl handles the rest
+    return fileName;
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateForm()) return;
     setLoading(true);
     try {
-      await onSubmit(formData);
+      const finalData = { ...formData };
+      
+      // Handle file upload
+      if (fileToUpload) {
+        const uploadedFilename = await uploadFileToSupabase(fileToUpload);
+        finalData["foto"] = uploadedFilename;
+      }
+
+      await onSubmit(finalData);
+    } catch (error) {
+       alert(error instanceof Error ? error.message : "Terjadi kesalahan saat upload");
     } finally {
       setLoading(false);
     }
@@ -271,6 +321,19 @@ export function EntityForm({
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   disabled={loading || mode === "view"}
                 />
+              ) : field.type === "file" ? (
+                <div className="flex flex-col gap-2">
+                   <input
+                     type="file"
+                     accept="image/*"
+                     className={`${inputClass} !py-2`}
+                     onChange={handleFileChange}
+                     disabled={loading || mode === "view"}
+                   />
+                   {formData[field.key] && !fileToUpload && (
+                     <p className="text-xs text-slate-500">File saat ini: {formData[field.key]}</p>
+                   )}
+                </div>
               ) : (
                 <input
                   type={field.type}
