@@ -5,7 +5,6 @@ type DataItem = {
   name: string;
   city: string;
   category: string;
-  rating: string;
   status: string;
 };
 
@@ -46,7 +45,6 @@ export function DashboardGridView({ data, onEdit, onDelete }: DashboardGridViewP
               <span className="inline-flex rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
                 {item.category}
               </span>
-              <span className="font-semibold text-amber-600">⭐ {item.rating}</span>
             </div>
 
             <div className="mt-4 flex gap-2 pt-4 border-t border-slate-200">

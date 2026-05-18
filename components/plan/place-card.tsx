@@ -60,20 +60,8 @@ export function PlaceCard({ place, onToggle, onDetail }: PlaceCardProps) {
           {place.subtitle}
         </p>
 
-        {/* Rating + Price */}
-        <div className="mt-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            {place.rating !== null ? (
-              <>
-                <span className="text-xs text-amber-400">★</span>
-                <span className="text-[0.65rem] font-semibold text-amber-600 sm:text-xs">
-                  {place.rating}
-                </span>
-              </>
-            ) : (
-              <span className="text-[0.65rem] text-slate-400">Belum ada rating</span>
-            )}
-          </div>
+        {/* Price Only */}
+        <div className="mt-2.5 flex items-center justify-end">
           <span
             className={`text-[0.7rem] font-bold sm:text-xs ${
               isFree ? "text-emerald-500" : "text-rose-500"

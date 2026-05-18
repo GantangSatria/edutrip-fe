@@ -67,24 +67,12 @@ function PlaceDetailHero({ image, regionBadge }: { image: string; regionBadge: s
   );
 }
 
-function InfoPills({ categoryLabel, rating }: { categoryLabel: string; rating: number | null }) {
+function InfoPills({ categoryLabel }: { categoryLabel: string }) {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+    <div className="grid grid-cols-1 gap-2 sm:gap-3">
       <div className="rounded-xl bg-slate-100 px-3 py-2.5 sm:px-3.5 sm:py-3">
         <p className="text-[0.65rem] font-medium text-slate-500 sm:text-xs">Kategori</p>
         <p className="mt-1 text-xs font-bold text-slate-800 sm:text-sm">{categoryLabel}</p>
-      </div>
-      <div className="rounded-xl bg-slate-100 px-3 py-2.5 sm:px-3.5 sm:py-3">
-        <p className="text-[0.65rem] font-medium text-slate-500 sm:text-xs">Rating</p>
-        <div className="mt-1 flex items-center gap-0.5 text-amber-400" aria-label={rating !== null ? `Rating ${rating} dari 5` : "Belum ada rating"}>
-          {rating !== null ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} className="text-sm sm:text-base">{i < Math.round(rating) ? "★" : "☆"}</span>
-            ))
-          ) : (
-            <span className="text-xs font-medium text-slate-400 sm:text-sm">Belum ada rating</span>
-          )}
-        </div>
       </div>
     </div>
   );
@@ -235,7 +223,7 @@ export function PlaceDetailModal({ place, categoryLabel, categoryIcon, onClose, 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
           <div className="space-y-4 sm:space-y-5">
             <PlaceDetailHero image={place.image} regionBadge={regionBadge} />
-            <InfoPills categoryLabel={categoryLabel} rating={place.rating} />
+            <InfoPills categoryLabel={categoryLabel} />
 
             <div className="space-y-2">
               <SectionTitle emoji="✨">Ringkasan Tempat</SectionTitle>

@@ -5,7 +5,6 @@ type DataItem = {
   name: string;
   city: string;
   category: string;
-  rating: string;
   status: string;
 };
 
@@ -41,7 +40,6 @@ export function DashboardTableView({ data, onEdit, onDelete }: DashboardTableVie
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-600">{item.category}</span>
-                <span className="font-semibold text-amber-600">⭐ {item.rating}</span>
               </div>
               <div className="flex gap-2 pt-2">
                 <DashboardActionButtons itemId={item.id} onEdit={onEdit} onDelete={onDelete} />
@@ -58,7 +56,6 @@ export function DashboardTableView({ data, onEdit, onDelete }: DashboardTableVie
               <th className="px-4 py-3 text-left font-semibold text-slate-700 sm:px-6">Nama</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-700">Kota</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-700">Kategori</th>
-              <th className="px-4 py-3 text-center font-semibold text-slate-700">Rating</th>
               <th className="px-4 py-3 text-center font-semibold text-slate-700">Status</th>
               <th className="px-4 py-3 text-center font-semibold text-slate-700">Aksi</th>
             </tr>
@@ -76,9 +73,6 @@ export function DashboardTableView({ data, onEdit, onDelete }: DashboardTableVie
                   <td className="px-4 py-4 font-medium text-slate-900 sm:px-6">{item.name}</td>
                   <td className="px-4 py-4 text-slate-600">{item.city}</td>
                   <td className="px-4 py-4 text-slate-600">{item.category}</td>
-                  <td className="px-4 py-4 text-center">
-                    <span className="font-semibold text-amber-600">⭐ {item.rating}</span>
-                  </td>
                   <td className="px-4 py-4 text-center">
                     <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
                       item.status === "Aktif"

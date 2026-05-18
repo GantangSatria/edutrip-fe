@@ -38,7 +38,6 @@ type DataItem = {
   name: string;
   city: string;
   category: string;
-  rating: string;
   status: string;
 };
 
@@ -65,7 +64,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_wisata),
         city: String(item.kota),
         category: String(item.kategori_wisata),
-        rating: "-",
         status: "Aktif",
       }));
     case "hotel":
@@ -74,7 +72,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_hotel),
         city: String(item.kota),
         category: String(item.tipe_hotel),
-        rating: "-",
         status: "Aktif",
       }));
     case "restoran":
@@ -83,7 +80,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_resto),
         city: String(item.kota),
         category: "Kuliner Halal",
-        rating: "-",
         status: "Aktif",
       }));
     case "toko":
@@ -92,7 +88,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_belanja),
         city: String(item.kota),
         category: String(item.jenis_belanja),
-        rating: "-",
         status: "Aktif",
       }));
     case "fasilitas":
@@ -101,7 +96,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_fas_ibadah),
         city: String(item.kota),
         category: String(item.tipe_fas),
-        rating: "-",
         status: "Aktif",
       }));
     case "transportasi":
@@ -110,7 +104,6 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         name: String(item.nama_transportasi),
         city: String(item.rute || "-"),
         category: String(item.jenis_transportasi),
-        rating: "-",
         status: "Aktif",
       }));
     default:
