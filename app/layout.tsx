@@ -13,8 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Edutrip",
-  description: "Rencanakan perjalanan Jepang yang nyaman dan halal bersama Edutrip.",
+  title: "EduTrip Japan — Halal Trip Planner",
+  description: "Rencanakan perjalanan edukasi & wisata halal ke Jepang. Hitung estimasi biaya real-time.",
+  icons: {
+    icon: "/Logo_Edutrip.png",
+    apple: "/Logo_Edutrip.png",
+  },
 };
 
 export default function RootLayout({

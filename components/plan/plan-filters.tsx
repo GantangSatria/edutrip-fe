@@ -149,10 +149,10 @@ export function PlanFilters({
           <Counter
             value={filters.people}
             min={1}
-            max={20}
+            max={50}
             unit="orang"
             onDecrement={() => onFilterChange("people", Math.max(1, filters.people - 1))}
-            onIncrement={() => onFilterChange("people", Math.min(20, filters.people + 1))}
+            onIncrement={() => onFilterChange("people", Math.min(50, filters.people + 1))}
           />
         </div>
       </div>

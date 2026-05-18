@@ -1,6 +1,5 @@
 import { HeroSection } from "@/components/home/hero-section";
 import { TopCitiesSection } from "@/components/home/top-cities-section";
-import { TripPickerSection } from "@/components/home/trip-picker-section";
 import { DestinationsSection } from "@/components/home/destinations-section";
 import { CtaSection } from "@/components/home/cta-section";
 import { TestimonialsSection } from "@/components/home/testimonials-section";
@@ -14,7 +13,6 @@ export default function Home() {
       <Header />
       <HeroSection />
       <TopCitiesSection />
-      <TripPickerSection />
       <DestinationsSection />
       <CtaSection />
       <TestimonialsSection />
