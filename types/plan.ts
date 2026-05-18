@@ -2,6 +2,7 @@ export type PlanCategory = {
   id: string;
   label: string;
   icon: string;
+  parentId?: string; // for sub-categories under a parent
 };
 
 export type PlanPlace = {
@@ -15,6 +16,9 @@ export type PlanPlace = {
   price: number;
   selected: boolean;
   categoryId: string;
+  subCategoryId?: string; // wisata sub-category (kampus, museum, etc.)
+  latitude?: number;
+  longitude?: number;
 };
 
 export type PlanTag = {

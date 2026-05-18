@@ -17,7 +17,7 @@ export function formatIDR(amount: number): string {
 //  Transportasi    = transportRatePerDay × days       × people
 //  Tiket Destinasi = totalDestinationTickets          × people  (sudah dijumlah)
 //  Restoran        = restaurantCount × avgMealRate    × people
-//  Pesawat PP      = flightPricePerPerson             × people
+//  Pesawat PP      = flightPricePerPerson × 2           × people
 
 export type GrandTotalInput = {
   people: number;
@@ -28,6 +28,7 @@ export type GrandTotalInput = {
   totalDestinationTickets: number;
   restaurantCount: number;
   avgMealRate: number;
+  /** Harga tiket pesawat SEKALI JALAN per orang — akan di-×2 (PP) oleh calculator */
   flightPricePerPerson: number;
 };
 
@@ -58,7 +59,7 @@ export function calculateGrandTotal(input: GrandTotalInput): GrandTotalResult {
   const transportasi = transportRatePerDay     * days            * people;
   const destinasi    = totalDestinationTickets                   * people;
   const restoran     = restaurantCount         * avgMealRate     * people;
-  const pesawat      = flightPricePerPerson                      * people;
+  const pesawat      = flightPricePerPerson * 2                  * people;
 
   const grandTotal = akomodasi + transportasi + destinasi + restoran + pesawat;
 

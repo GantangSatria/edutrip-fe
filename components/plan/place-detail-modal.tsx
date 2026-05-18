@@ -29,9 +29,6 @@ function mapCenterForArea(area: string): { lat: number; lon: number } {
   return { lat: 35.6762, lon: 139.6503 }; // Tokyo default
 }
 
-function staticMapUrl(lat: number, lon: number): string {
-  return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lon}&zoom=10&size=640x280&markers=${lat},${lon},red-pushpin`;
-}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -204,8 +201,9 @@ export function PlaceDetailModal({ place, categoryLabel, categoryIcon, onClose, 
     if (e.target === overlayRef.current) onClose();
   };
 
-  const { lat, lon } = mapCenterForArea(place.area);
-  const mapSrc        = staticMapUrl(lat, lon);
+  const lat = place.latitude ?? mapCenterForArea(place.area).lat;
+  const lon = place.longitude ?? mapCenterForArea(place.area).lon;
+  const hasExactCoords = place.latitude != null && place.longitude != null;
   const regionBadge   = regionBadgeFromArea(place.area);
   const isFree        = place.price === 0;
   const priceLabel    = isFree ? "Gratis" : formatIDR(place.price);
@@ -214,6 +212,10 @@ export function PlaceDetailModal({ place, categoryLabel, categoryIcon, onClose, 
     onToggleCart(place.id);
     onClose();
   };
+
+  // Google Maps embed URL with marker — hl=id for Bahasa Indonesia
+  const gmapsEmbedUrl = `https://maps.google.com/maps?q=${lat},${lon}&z=16&hl=id&output=embed`;
+  const gmapsExternalUrl = `https://www.google.com/maps?q=${lat},${lon}&hl=id`;
 
   return (
     <div
@@ -250,11 +252,30 @@ export function PlaceDetailModal({ place, categoryLabel, categoryIcon, onClose, 
             </div>
 
             <div>
-              <h4 className="text-sm font-bold text-slate-900 sm:text-base">Lokasi di Peta</h4>
-              <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={mapSrc} alt="Peta lokasi perkiraan" className="h-40 w-full object-cover sm:h-44" loading="lazy" />
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-bold text-slate-900 sm:text-base">📍 Lokasi di Peta</h4>
+                {hasExactCoords && (
+                  <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[0.6rem] font-semibold text-emerald-600">Lokasi Tepat</span>
+                )}
               </div>
+              <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                <iframe
+                  title={`Peta ${place.title}`}
+                  src={gmapsEmbedUrl}
+                  className="h-48 w-full border-0 sm:h-56"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              </div>
+              <a
+                href={gmapsExternalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1.5 inline-flex items-center gap-1 text-[0.65rem] text-primary hover:underline sm:text-xs"
+              >
+                Buka di Google Maps ↗
+              </a>
             </div>
           </div>
         </div>
