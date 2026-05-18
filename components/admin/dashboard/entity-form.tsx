@@ -348,52 +348,68 @@ export function EntityForm({
             <div key={field.key}>
               <label className={labelClass}>{field.label}</label>
 
-              {field.type === "select" ? (
-                <select
-                  className={inputClass}
-                  value={formData[field.key] ?? ""}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
-                  disabled={loading || mode === "view"}
-                >
-                  {field.options?.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              ) : field.type === "textarea" ? (
-                <textarea
-                  className={textareaClass}
-                  placeholder={field.placeholder}
-                  rows={3}
-                  value={formData[field.key] ?? ""}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
-                  disabled={loading || mode === "view"}
-                />
-              ) : field.type === "file" ? (
-                <div className="flex flex-col gap-2">
-                   <input
-                     type="file"
-                     accept="image/*"
-                     className={`${inputClass} !py-2`}
-                     onChange={handleFileChange}
-                     disabled={loading || mode === "view"}
-                   />
-                   {formData[field.key] && !fileToUpload && (
-                     <p className="text-xs text-slate-500">File saat ini: {formData[field.key]}</p>
-                   )}
-                </div>
-              ) : (
-                <input
-                  type={field.type}
-                  className={inputClass}
-                  placeholder={field.placeholder}
-                  step={field.type === "number" ? "any" : undefined}
-                  value={formData[field.key] ?? ""}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
-                  disabled={loading || mode === "view"}
-                />
-              )}
+              {(() => {
+                const isTransportasiLocked = entityTab === "transportasi" && 
+                  mode === "edit" && 
+                  (field.key === "kode_bandara" || field.key === "rute" || field.key === "jenis_transportasi");
+                
+                const isFieldDisabled = loading || mode === "view" || isTransportasiLocked;
+
+                if (field.type === "select") {
+                  return (
+                    <select
+                      className={inputClass}
+                      value={formData[field.key] ?? ""}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={isFieldDisabled}
+                    >
+                      {field.options?.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  );
+                } else if (field.type === "textarea") {
+                  return (
+                    <textarea
+                      className={textareaClass}
+                      placeholder={field.placeholder}
+                      rows={3}
+                      value={formData[field.key] ?? ""}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={isFieldDisabled}
+                    />
+                  );
+                } else if (field.type === "file") {
+                  return (
+                    <div className="flex flex-col gap-2">
+                       <input
+                         type="file"
+                         accept="image/*"
+                         className={`${inputClass} !py-2`}
+                         onChange={handleFileChange}
+                         disabled={isFieldDisabled}
+                       />
+                       {formData[field.key] && !fileToUpload && (
+                         <p className="text-xs text-slate-500">File saat ini: {formData[field.key]}</p>
+                       )}
+                    </div>
+                  );
+                } else {
+                  return (
+                    <input
+                      type={field.type}
+                      className={inputClass}
+                      placeholder={field.placeholder}
+                      step={field.type === "number" ? "any" : undefined}
+                      value={formData[field.key] ?? ""}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={isFieldDisabled}
+                    />
+                  );
+                }
+              })()}
 
               {errors[field.key] && (
                 <p className="mt-1.5 text-xs text-rose-600 sm:text-sm">{errors[field.key]}</p>
