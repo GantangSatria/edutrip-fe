@@ -17,6 +17,8 @@ export type PlanPlace = {
   selected: boolean;
   categoryId: string;
   subCategoryId?: string; // wisata sub-category (kampus, museum, etc.)
+  latitude?: number;
+  longitude?: number;
 };
 
 export type PlanTag = {

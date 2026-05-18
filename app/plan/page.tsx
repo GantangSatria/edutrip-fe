@@ -49,6 +49,8 @@ function transformApiDataToPlaces(apiData: PlanData): PlanPlace[] {
       selected: false,
       categoryId: "wisata",
       subCategoryId: item.kategori_wisata?.toLowerCase().replace(/\s+/g, "-") || undefined,
+      latitude: item.latitude,
+      longitude: item.longitude,
     });
   });
 
@@ -65,6 +67,8 @@ function transformApiDataToPlaces(apiData: PlanData): PlanPlace[] {
       price: item.harga_hotel,
       selected: false,
       categoryId: "hotel",
+      latitude: item.latitude,
+      longitude: item.longitude,
     });
   });
 
@@ -81,6 +85,8 @@ function transformApiDataToPlaces(apiData: PlanData): PlanPlace[] {
       price: 0, // Restoran doesn't have price in API response
       selected: false,
       categoryId: "kuliner",
+      latitude: item.latitude,
+      longitude: item.longitude,
     });
   });
 
@@ -97,6 +103,8 @@ function transformApiDataToPlaces(apiData: PlanData): PlanPlace[] {
       price: 0, // Toko doesn't have price
       selected: false,
       categoryId: "oleh",
+      latitude: item.latitude,
+      longitude: item.longitude,
     });
   });
 
@@ -113,6 +121,8 @@ function transformApiDataToPlaces(apiData: PlanData): PlanPlace[] {
       price: 0, // Fasilitas ibadah is free
       selected: false,
       categoryId: "fasilitas",
+      latitude: item.latitude,
+      longitude: item.longitude,
     });
   });
 
