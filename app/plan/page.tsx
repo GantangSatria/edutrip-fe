@@ -225,13 +225,14 @@ export default function PlanPage() {
     const cheapest = sorted[0];
     return {
       cheapest: cheapest.harga_transportasi_idr,
+      roundTrip: cheapest.harga_transportasi_idr * 2,
       airline: cheapest.nama_transportasi,
       note: cheapest.ket_transportasi,
     };
   }, [matchedFlights]);
 
-  // The actual flight price per person to use in grand total
-  const flightPricePerPerson = flightInfo?.cheapest ?? MASTER_RATES.flightPricePerPerson;
+  // Flight price per person (one-way) — 0 if airports not selected, calculator handles ×2 for PP
+  const flightPricePerPerson = flightInfo?.cheapest ?? 0;
 
   // Interactive state — selection & tag toggling
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -453,7 +454,14 @@ const handleOpenWhatsApp = useCallback(() => {
 
   const handleFilterChange = useCallback(
     (key: keyof PlanFiltersState, value: string | number) => {
-      setFilters((prev) => ({ ...prev, [key]: value }));
+      setFilters((prev) => {
+        const next = { ...prev, [key]: value };
+        // When departure changes, reset destination (routes may differ)
+        if (key === "departure" && value !== prev.departure) {
+          next.destination = "";
+        }
+        return next;
+      });
     },
     []
   );
@@ -548,6 +556,7 @@ const handleOpenWhatsApp = useCallback(() => {
         grandTotal={grandTotal}
         people={filters.people}
         cities={activeCities}
+        disableConsult={!filters.departure || !filters.destination}
         onOpenCart={handleOpenCart}
         onConsult={handleConsultClick}
       />

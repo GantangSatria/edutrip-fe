@@ -10,7 +10,7 @@ type PlanFiltersProps = {
   tags: PlanTag[];
   departureAirports: AirportOption[];
   destinationAirports: AirportOption[];
-  flightInfo?: { cheapest: number; airline: string; note: string } | null;
+  flightInfo?: { cheapest: number; roundTrip: number; airline: string; note: string } | null;
   onTagToggle: (id: string) => void;
   onFilterChange: (key: keyof PlanFiltersState, value: string | number) => void;
 };
@@ -157,14 +157,19 @@ export function PlanFilters({
         </div>
       </div>
 
-      {/* Flight match info */}
+      {/* Flight match info — Tiket PP */}
       {flightInfo && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-xs text-emerald-700 sm:text-sm">
+        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl bg-emerald-50 px-3 py-2.5 text-xs text-emerald-700 sm:text-sm">
           <svg className="h-4 w-4 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M22 2 11 13" /><path d="m22 2-7 20-4-9-9-4 20-7z" />
           </svg>
+          <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[0.65rem] font-bold tracking-wide text-emerald-600 uppercase">
+            Tiket PP
+          </span>
           <span className="font-semibold">{flightInfo.airline}</span>
-          <span className="text-emerald-600">mulai {formatIDR(flightInfo.cheapest)}/orang</span>
+          <span className="text-emerald-600">
+            {formatIDR(flightInfo.cheapest)}/sekali jalan → <strong>{formatIDR(flightInfo.roundTrip)}/orang PP</strong>
+          </span>
           {flightInfo.note && (
             <span className="text-emerald-500">• {flightInfo.note}</span>
           )}
