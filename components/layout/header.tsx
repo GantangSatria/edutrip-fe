@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 import { FlightPriceModal } from "@/components/layout/flight-price-modal";
+import { transportasiService } from "@/lib/service";
+import { useFetch } from "@/hooks/useFetch";
+import type { Transportasi } from "@/types/transportasi";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,6 +20,13 @@ export function Header() {
   const closeFlightModal = useCallback(() => {
     setFlightModalOpen(false);
   }, []);
+
+  // Fetch transportasi data for flight modal
+  const { data: transportasiData } = useFetch(() => transportasiService.getAll());
+  const flights: Transportasi[] = useMemo(
+    () => transportasiData || [],
+    [transportasiData]
+  );
 
   return (
     <>
@@ -86,7 +96,7 @@ export function Header() {
         )}
       </div>
 
-      <FlightPriceModal open={flightModalOpen} onClose={closeFlightModal} />
+      <FlightPriceModal open={flightModalOpen} flights={flights} onClose={closeFlightModal} />
     </>
   );
 }
