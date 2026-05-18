@@ -18,12 +18,12 @@ export type City = {
   terrainRest: string;
 };
 
-export type Destination = {
-  name: string;
-  location: string;
-  image: string;
-  price: number;
-};
+// export type Destination = {
+//   name: string;
+//   location: string;
+//   image: string;
+//   price: number;
+// };
 
 export type Testimonial = {
   name: string;

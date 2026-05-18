@@ -5,21 +5,21 @@ export type PlanCategory = {
   parentId?: string; // for sub-categories under a parent
 };
 
-export type PlanPlace = {
-  id: string;
-  title: string;
-  subtitle: string;
-  area: string;
-  badge: string;
-  image: string;
-  rating: number | null;
-  price: number;
-  selected: boolean;
-  categoryId: string;
-  subCategoryId?: string; // wisata sub-category (kampus, museum, etc.)
-  latitude?: number;
-  longitude?: number;
-};
+// export type PlanPlace = {
+//   id: string;
+//   title: string;
+//   subtitle: string;
+//   area: string;
+//   badge: string;
+//   image: string;
+//   rating: number | null;
+//   price: number;
+//   selected: boolean;
+//   categoryId: string;
+//   subCategoryId?: string; // wisata sub-category (kampus, museum, etc.)
+//   latitude?: number;
+//   longitude?: number;
+// };
 
 export type PlanTag = {
   id: string;
