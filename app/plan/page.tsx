@@ -22,7 +22,7 @@ import {
   MASTER_RATES,
 } from "@/data/plan";
 
-import type { PlanFiltersState, PlanPlace, PlanTag } from "@/types/plan";
+import type { PlanCategory, PlanFiltersState, PlanPlace, PlanTag } from "@/types/plan";
 import type { PlanData } from "@/types/planData";
 import type { Wisata } from "@/types/wisata";
 import type { Hotel } from "@/types/hotel";
@@ -47,6 +47,7 @@ function transformApiDataToPlaces(apiData: PlanData): PlanPlace[] {
       price: item.tiket_wisata,
       selected: false,
       categoryId: "wisata",
+      subCategoryId: item.kategori_wisata?.toLowerCase().replace(/\s+/g, "-") || undefined,
     });
   });
 
@@ -117,6 +118,16 @@ function transformApiDataToPlaces(apiData: PlanData): PlanPlace[] {
   return places;
 }
 
+// Icons for wisata sub-categories
+const subCategoryIcons: Record<string, string> = {
+  "kampus": "🎓",
+  "museum": "🏛",
+  "pabrik": "🏭",
+  "taman": "🌳",
+  "taman-hiburan": "🎢",
+  "tempat-terkenal": "📍",
+};
+
 export default function PlanPage() {
   const [showTerms, setShowTerms] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -178,10 +189,64 @@ export default function PlanPage() {
     [tags]
   );
 
+
+  // Build dynamic categories with wisata sub-categories from API data
+  const dynamicCategories: PlanCategory[] = useMemo(() => {
+    const base: PlanCategory[] = [
+      { id: "all", label: "Semua", icon: "◈" },
+      { id: "wisata", label: "Wisata", icon: "🗺" },
+    ];
+
+    // Extract unique wisata sub-categories from places
+    const subCats = new Set<string>();
+    for (const p of places) {
+      if (p.categoryId === "wisata" && p.subCategoryId) {
+        subCats.add(p.subCategoryId);
+      }
+    }
+    // Sort alphabetically and add as children of wisata
+    const sortedSubs = Array.from(subCats).sort();
+    for (const sub of sortedSubs) {
+      const label = sub
+        .split("-")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ");
+      base.push({
+        id: `wisata:${sub}`,
+        label,
+        icon: subCategoryIcons[sub] || "📌",
+        parentId: "wisata",
+      });
+    }
+
+    // Append other main categories
+    base.push(
+      { id: "kuliner", label: "Kuliner Halal", icon: "🍜" },
+      { id: "hotel", label: "Hotel", icon: "🏨" },
+      { id: "fasilitas", label: "Fasilitas Ibadah", icon: "🕌" },
+      { id: "oleh", label: "Oleh-oleh", icon: "🎁" },
+    );
+
+    return base;
+  }, [places]);
+
   const filteredPlaces = useMemo(() => {
     return places.filter((p) => {
-      const matchesCategory =
-        activeCategory === "all" || p.categoryId === activeCategory;
+      let matchesCategory: boolean;
+
+      if (activeCategory === "all") {
+        matchesCategory = true;
+      } else if (activeCategory.startsWith("wisata:")) {
+        // Wisata sub-category filter (e.g. "wisata:kampus")
+        const subId = activeCategory.split(":")[1];
+        matchesCategory = p.categoryId === "wisata" && p.subCategoryId === subId;
+      } else if (activeCategory === "wisata") {
+        // Show all wisata items (all sub-categories)
+        matchesCategory = p.categoryId === "wisata";
+      } else {
+        matchesCategory = p.categoryId === activeCategory;
+      }
+
       const matchesCity =
         activeTags.length === 0 ||
         activeTags.some((tagId) => p.area.toLowerCase().includes(tagId));
@@ -198,6 +263,11 @@ export default function PlanPage() {
     const counts: Record<string, number> = { all: places.length };
     for (const p of places) {
       counts[p.categoryId] = (counts[p.categoryId] ?? 0) + 1;
+      // Also count wisata sub-categories
+      if (p.categoryId === "wisata" && p.subCategoryId) {
+        const subKey = `wisata:${p.subCategoryId}`;
+        counts[subKey] = (counts[subKey] ?? 0) + 1;
+      }
     }
     return counts;
   }, [places]);
@@ -325,7 +395,7 @@ const handleOpenWhatsApp = useCallback(() => {
 
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
           <CategorySidebar
-            categories={planCategories}
+            categories={dynamicCategories}
             activeId={activeCategory}
             counts={categoryCounts}
             onSelect={setActiveCategory}

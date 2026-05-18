@@ -111,10 +111,10 @@ export function PlanFilters({ filters, tags, onTagToggle, onFilterChange }: Plan
           <Counter
             value={filters.days}
             min={1}
-            max={30}
+            max={15}
             unit="hari"
             onDecrement={() => onFilterChange("days", Math.max(1, filters.days - 1))}
-            onIncrement={() => onFilterChange("days", Math.min(30, filters.days + 1))}
+            onIncrement={() => onFilterChange("days", Math.min(15, filters.days + 1))}
           />
         </div>
 
