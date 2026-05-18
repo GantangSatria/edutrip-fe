@@ -162,12 +162,13 @@ export default function PlanPage() {
   const [filters, setFilters] = useState<PlanFiltersState>({
     departure: "",
     destination: "",
-    days: 7,
-    people: 2,
+    days: 1,
+    people: 1,
     activeTags: [],
     activeCategory: "all",
   });
 
+  // TODO: refactor to hooks
   // Fetch plan data from API
   const { data: apiData, loading, error } = useFetch(() => planService.getAll());
 
@@ -274,10 +275,10 @@ export default function PlanPage() {
     return Array.from(citiesSet).map((city, idx) => ({
       id: city.toLowerCase(),
       label: city,
-      // Default first 2 cities active; after user clicks, use activeTagIds
+      // Default first 3 cities active; after user clicks, use activeTagIds
       active: activeTagIds !== null
         ? activeTagIds.has(city.toLowerCase())
-        : idx < 2,
+        : idx < 3,
     }));
   }, [apiData, activeTagIds]);
 
