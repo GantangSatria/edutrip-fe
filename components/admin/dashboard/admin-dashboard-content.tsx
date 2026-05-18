@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardStats } from "./dashboard-stats";
 import { DashboardTableView } from "./dashboard-table-view";
@@ -22,6 +22,7 @@ import {
   transportasiService,
 } from "@/lib/service";
 import { useFetch } from "@/hooks/useFetch";
+import { deleteImageFromSupabase } from "@/lib/supabase";
 import type { WisataPayload } from "@/types/wisata";
 import type { HotelPayload } from "@/types/hotel";
 import type { RestoranHalalPayload } from "@/types/restoranHalal";
@@ -212,8 +213,8 @@ export function AdminDashboardContent() {
     [activeTab]
   );
 
-  const rawList: EntityRecord[] = (rawData as EntityRecord[]) || [];
-  const currentData = transformToDataItems(activeTab, rawList);
+  const rawList: EntityRecord[] = useMemo(() => (rawData as EntityRecord[]) || [], [rawData]);
+  const currentData = useMemo(() => transformToDataItems(activeTab, rawList), [activeTab, rawList]);
 
   const tabLabel = entityTabs.find((t) => t.id === activeTab)?.label ?? "";
 
@@ -264,13 +265,25 @@ export function AdminDashboardContent() {
     async (itemId: string) => {
       if (!confirm("Yakin ingin menghapus data ini?")) return;
       try {
+        const rawItem = rawList.find((d) => String(d.id) === itemId);
+
         await deleteItem(activeTab, Number(itemId));
+
+        
+        // If there's an associated image, delete it from Supabase
+        if (rawItem && typeof rawItem.foto === "string" && rawItem.foto) {
+
+          await deleteImageFromSupabase(activeTab, rawItem.foto);
+
+        }
+
         refetch();
       } catch (err) {
+        console.error("Error deleting item:", err);
         alert(err instanceof Error ? err.message : "Gagal menghapus data");
       }
     },
-    [activeTab, refetch]
+    [activeTab, refetch, rawList]
   );
 
   // ─── Render ────────────────────────────────────────────────────────────────
