@@ -198,11 +198,55 @@ export function EntityForm({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     for (const f of fields) {
+      const val = formData[f.key];
+      const strVal = (val ?? "").toString().trim();
+
       // If mode is create and file is required, check if file is selected
-      if (f.type === "file" && f.required && !fileToUpload && !(formData[f.key] ?? "").toString().trim()) {
+      if (f.type === "file" && f.required && !fileToUpload && !strVal) {
         newErrors[f.key] = `${f.label} wajib diupload`;
-      } else if (f.type !== "file" && f.required && !(formData[f.key] ?? "").toString().trim()) {
+        continue;
+      } else if (f.type !== "file" && f.required && !strVal) {
         newErrors[f.key] = `${f.label} wajib diisi`;
+        continue;
+      }
+
+      if (!strVal) continue;
+
+      // Harga & Tiket validation
+      if (f.key.toLowerCase().includes("harga") || f.key.toLowerCase().includes("tiket")) {
+        const numVal = Number(strVal);
+        if (isNaN(numVal)) {
+          newErrors[f.key] = `${f.label} harus berupa angka`;
+        } else if (numVal < 0) {
+          newErrors[f.key] = `${f.label} tidak boleh negatif`;
+        } else if (strVal.length > 10) {
+          newErrors[f.key] = `${f.label} maksimal 10 digit`;
+        }
+      }
+
+      // Latitude validation
+      if (f.key.toLowerCase().includes("latitude")) {
+        const numVal = Number(strVal);
+        if (isNaN(numVal) || numVal < -90 || numVal > 90) {
+          newErrors[f.key] = "Latitude harus berupa angka antara -90 dan 90";
+        }
+      }
+
+      // Longitude validation
+      if (f.key.toLowerCase().includes("longitude")) {
+        const numVal = Number(strVal);
+        if (isNaN(numVal) || numVal < -180 || numVal > 180) {
+          newErrors[f.key] = "Longitude harus berupa angka antara -180 dan 180";
+        }
+      }
+
+      // Kode Bandara validation
+      if (f.key.toLowerCase().includes("kode_bandara")) {
+        if (strVal.length > 4) {
+          newErrors[f.key] = "Kode bandara maksimal 4 karakter";
+        } else if (!/^[A-Z]+$/.test(strVal)) {
+          newErrors[f.key] = "Kode bandara hanya boleh berisi huruf kapital";
+        }
       }
     }
     setErrors(newErrors);

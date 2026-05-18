@@ -37,6 +37,7 @@ export function DashboardActionButtons({
   return (
     <div className={`flex gap-2 w-full ${layout === "vertical" ? "flex-col" : ""}`}>
       <button 
+        type="button"
         onClick={() => onEdit?.(itemId)}
         className={editButtonClass}
       >
@@ -48,6 +49,7 @@ export function DashboardActionButtons({
       </button>
 
       <button
+        type="button"
         onClick={handleDelete}
         disabled={isDeleting}
         className={deleteButtonClass}
