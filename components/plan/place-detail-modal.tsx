@@ -11,7 +11,8 @@ type PlaceDetailModalProps = {
   categoryLabel: string;
   categoryIcon: string;
   onClose: () => void;
-  onToggleCart: (id: string) => void;
+  onToggleCart?: (id: string) => void;
+  hideCartAction?: boolean;
 };
 
 function regionBadgeFromArea(area: string): string {
@@ -126,47 +127,59 @@ function PlaceDetailFooter({
   isFree,
   selected,
   onPrimary,
+  hideCartAction = false,
 }: {
   priceLabel: string;
   isFree: boolean;
   selected: boolean;
   onPrimary: () => void;
+  hideCartAction?: boolean;
 }) {
   return (
     <div className="shrink-0 border-t border-slate-100 px-4 py-3.5 sm:px-5 sm:py-4">
-      <div className="mb-3 flex items-center justify-between text-sm sm:text-base">
+      <div className={`flex items-center justify-between text-sm sm:text-base ${!hideCartAction ? 'mb-3' : ''}`}>
         <span className="font-semibold text-slate-700">Harga Tiket</span>
         <span className={`font-bold ${isFree ? "text-emerald-600" : "text-slate-900"}`}>
           {priceLabel}
           {!isFree && <span className="ml-1 text-xs font-normal text-slate-500">/orang</span>}
         </span>
       </div>
-      <button
-        type="button"
-        onClick={onPrimary}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-sm shadow-primary/25 transition-all hover:bg-primary-dark active:scale-[0.99] sm:py-3.5 sm:text-base"
-      >
-        {selected ? (
-          <>
-            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
-            Hapus dari Cart
-          </>
-        ) : (
-          <>
-            <span className="text-lg leading-none">+</span>
-            Tambah ke Cart
-          </>
-        )}
-      </button>
+      
+      {!hideCartAction && (
+        <button
+          type="button"
+          onClick={onPrimary}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-sm shadow-primary/25 transition-all hover:bg-primary-dark active:scale-[0.99] sm:py-3.5 sm:text-base"
+        >
+          {selected ? (
+            <>
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              Hapus dari Cart
+            </>
+          ) : (
+            <>
+              <span className="text-lg leading-none">+</span>
+              Tambah ke Cart
+            </>
+          )}
+        </button>
+      )}
     </div>
   );
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export function PlaceDetailModal({ place, categoryLabel, categoryIcon, onClose, onToggleCart }: PlaceDetailModalProps) {
+export function PlaceDetailModal({ 
+  place, 
+  categoryLabel, 
+  categoryIcon, 
+  onClose, 
+  onToggleCart,
+  hideCartAction = false,
+}: PlaceDetailModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -197,7 +210,7 @@ export function PlaceDetailModal({ place, categoryLabel, categoryIcon, onClose, 
   const priceLabel    = isFree ? "Gratis" : formatIDR(place.price);
 
   const handlePrimary = () => {
-    onToggleCart(place.id);
+    onToggleCart?.(place.id);
     onClose();
   };
 
@@ -268,7 +281,13 @@ export function PlaceDetailModal({ place, categoryLabel, categoryIcon, onClose, 
           </div>
         </div>
 
-        <PlaceDetailFooter priceLabel={priceLabel} isFree={isFree} selected={place.selected} onPrimary={handlePrimary} />
+        <PlaceDetailFooter 
+          priceLabel={priceLabel} 
+          isFree={isFree} 
+          selected={place.selected} 
+          onPrimary={handlePrimary} 
+          hideCartAction={hideCartAction}
+        />
       </div>
     </div>
   );

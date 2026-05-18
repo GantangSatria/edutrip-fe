@@ -4,19 +4,14 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 
 import { SectionHeading } from "@/components/ui/section-heading";
+import { PlaceDetailModal } from "@/components/plan/place-detail-modal";
 import { useFetch } from "@/hooks/useFetch";
 import { wisataService } from "@/lib/service";
 import { getImageUrl } from "@/lib/image";
 import type { Wisata } from "@/types/wisata";
+import type { PlanPlace } from "@/types/plan";
 
-function formatIDR(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+
 
 const PER_PAGE_MOBILE = 6;  // 2 cols × 3 rows
 const PER_PAGE_DESKTOP = 6; // 3 cols × 2 rows
@@ -26,6 +21,25 @@ export function DestinationsSection() {
   const destinations: Wisata[] = useMemo(() => (data || []).slice(0, 12), [data]);
 
   const [page, setPage] = useState(0);
+  const [selectedItem, setSelectedItem] = useState<Wisata | null>(null);
+
+  const mappedSelectedPlace: PlanPlace | null = useMemo(() => {
+    if (!selectedItem) return null;
+    return {
+      id: String(selectedItem.id),
+      categoryId: "wisata",
+      area: selectedItem.kota,
+      title: selectedItem.nama_wisata,
+      subtitle: selectedItem.kategori_wisata,
+      image: getImageUrl(selectedItem.foto, "wisata"),
+      price: selectedItem.tiket_wisata,
+      latitude: selectedItem.latitude,
+      longitude: selectedItem.longitude,
+      badge: selectedItem.kategori_wisata,
+      rating: null,
+      selected: false,
+    };
+  }, [selectedItem]);
 
   // We use the desktop page size for slicing and let CSS handle visibility
   const totalPages = Math.ceil(destinations.length / PER_PAGE_DESKTOP);
@@ -69,14 +83,14 @@ export function DestinationsSection() {
       {/* Desktop grid (3 cols) — hidden on mobile */}
       <div className="mx-auto hidden w-full max-w-5xl grid-cols-3 gap-5 px-8 sm:grid">
         {currentItems.map((item) => (
-          <DestinationCard key={item.id} item={item} />
+          <DestinationCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />
         ))}
       </div>
 
       {/* Mobile grid (2 cols) — hidden on sm+ */}
       <div className="mx-auto grid w-full max-w-md grid-cols-2 gap-3 px-4 sm:hidden">
         {mobileItems.map((item) => (
-          <DestinationCard key={item.id} item={item} />
+          <DestinationCard key={item.id} item={item} onClick={() => setSelectedItem(item)} />
         ))}
       </div>
 
@@ -130,16 +144,28 @@ export function DestinationsSection() {
           </button>
         </div>
       )}
+
+      {selectedItem && (
+        <PlaceDetailModal
+          place={mappedSelectedPlace}
+          categoryLabel="Destinasi Wisata"
+          categoryIcon="🏛️"
+          onClose={() => setSelectedItem(null)}
+          hideCartAction={true}
+        />
+      )}
     </section>
   );
 }
 
-function DestinationCard({ item }: { item: Wisata }) {
+function DestinationCard({ item, onClick }: { item: Wisata; onClick: () => void }) {
   const imgSrc = getImageUrl(item.foto, "wisata");
-  const isFree = item.tiket_wisata === 0;
 
   return (
-    <article className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+    <article 
+      className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
+      onClick={onClick}
+    >
       <div className="relative h-28 overflow-hidden sm:h-32 lg:h-36">
         <Image
           src={imgSrc}
@@ -155,9 +181,6 @@ function DestinationCard({ item }: { item: Wisata }) {
       <div className="p-2.5 sm:p-3">
         <h3 className="truncate text-xs font-semibold text-slate-900 sm:text-sm">{item.nama_wisata}</h3>
         <p className="mt-0.5 text-[0.6rem] text-slate-500 sm:text-[0.7rem]">{item.kategori_wisata}</p>
-        <p className={`mt-1 text-[0.65rem] font-bold sm:text-xs ${isFree ? "text-emerald-600" : "text-rose-700"}`}>
-          {isFree ? "Gratis" : formatIDR(item.tiket_wisata)}
-        </p>
       </div>
     </article>
   );
