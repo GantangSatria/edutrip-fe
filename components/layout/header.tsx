@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useCallback, useMemo } from "react";
 
 import { FlightPriceModal } from "@/components/layout/flight-price-modal";
@@ -32,7 +33,10 @@ export function Header() {
     <>
       <div className="fixed top-0 left-0 z-50 w-full bg-white/90 shadow-sm backdrop-blur-md md:opacity-75">
         <div className="flex items-center justify-between px-4 py-3 text-black">
-          <span className="text-[1.1rem] font-semibold sm:text-[1.25rem]">EDUTRIP Japan</span>
+          <Link href="/" className="flex items-center gap-2">
+            <Image src="/Logo_Edutrip.png" alt="EduTrip" width={34} height={34} className="rounded-full" />
+            <span className="text-[1.1rem] font-semibold sm:text-[1.25rem]">EDUTRIP Japan</span>
+          </Link>
 
           <div className="hidden items-center gap-6 text-sm text-gray-500 md:flex">
             <Link
