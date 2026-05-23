@@ -7,7 +7,7 @@ import { CityDetailModal } from "@/components/home/city-detail-modal";
 import { useFetch } from "@/hooks/useFetch";
 import { kotaService } from "@/lib/service";
 import { getImageUrl } from "@/lib/image";
-import type { City, CityFeature } from "@/types/travel";
+import type { City, CityFeature, CityFeatureId } from "@/types/travel";
 
 const cityMeta: Record<string, { tagline: string; halal: string }> = {
   Tokyo: { tagline: "Ibu kota teknologi dan budaya modern", halal: "150+ Halal" },
@@ -23,21 +23,29 @@ export function TopCitiesSection() {
   // Map API data to the frontend City type
   const dynamicCityCards: City[] = (rawCities || []).map((kota) => {
     // Parse features if they come as string array or stringified JSON
-    let parsedFeatures: string[] = [];
+    let parsedFeatures: any[] = [];
     if (Array.isArray(kota.features)) {
       parsedFeatures = kota.features;
     } else if (typeof kota.features === "string") {
       try {
         parsedFeatures = JSON.parse(kota.features);
       } catch {
-        parsedFeatures = (kota.features as string).split(",").map((s) => s.trim());
+        parsedFeatures = (kota.features as string).split(",").map((s) => s.trim()).filter(Boolean);
       }
     }
 
-    const features: CityFeature[] = parsedFeatures.map((f, i) => ({
-      id: "building", // Fallback icon ID for all dynamic features
-      text: f,
-    }));
+    const features: CityFeature[] = parsedFeatures.map((f: any, i) => {
+      if (typeof f === "object" && f !== null) {
+        return {
+          id: (f.id as CityFeatureId) || "building",
+          text: f.text || JSON.stringify(f),
+        };
+      }
+      return {
+        id: "building", // Fallback icon ID for plain strings
+        text: String(f),
+      };
+    });
 
     return {
       name: kota.name,

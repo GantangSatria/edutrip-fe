@@ -145,9 +145,23 @@ export function apiItemToFormData(tab: EntityTab, raw: Record<string, unknown>):
   for (const field of fields) {
     let val = raw[field.key];
     
-    // For 'kota', the backend returns 'image' but the form field is 'foto'
-    if (tab === "kota" && field.key === "foto") {
-      val = raw["image"];
+    // For 'kota', handle specific fields
+    if (tab === "kota") {
+      if (field.key === "foto") {
+        val = raw["image"];
+      } else if (field.key === "features" && typeof val === "string") {
+        try {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) {
+            val = parsed
+              .map((item) => (typeof item === "object" && item !== null ? item.text || "" : String(item)))
+              .filter(Boolean)
+              .join(", ");
+          }
+        } catch (e) {
+          // Not valid JSON, leave as raw string
+        }
+      }
     }
 
     result[field.key] = val != null ? String(val) : "";
