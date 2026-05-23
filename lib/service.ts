@@ -8,6 +8,8 @@ import type { TokoOlehOleh, TokoOlehOlehPayload } from "@/types/tokoOlehOleh";
 import type { Transportasi, TransportasiPayload } from "@/types/transportasi";
 import type { Wisata, WisataPayload } from "@/types/wisata";
 import type { PlanData } from "@/types/planData";
+import type { Setting, SettingPayload } from "@/types/settings";
+import type { Kota, KotaPayload } from "@/types/kota";
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -134,4 +136,33 @@ export const transportasiService = {
 export const planService = {
   getAll: () =>
     api.get<ApiResponse<PlanData>>("/plan-data").then((r) => r.data),
+};
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+export const settingsService = {
+  getAll: () =>
+    api.get<ApiResponse<Setting[]>>("/settings").then((r) => r.data),
+
+  update: (key: string, payload: SettingPayload) =>
+    api.put<ApiResponse<Setting>>(`/admin/settings/${key}`, payload).then((r) => r.data),
+};
+
+// ─── Kota ─────────────────────────────────────────────────────────────────────
+
+export const kotaService = {
+  getAll: () =>
+    api.get<ApiResponse<Kota[]>>("/kota").then((r) => r.data),
+
+  getById: (id: number) =>
+    api.get<ApiResponse<Kota>>(`/kota/${id}`).then((r) => r.data),
+
+  create: (payload: KotaPayload) =>
+    api.post<ApiResponse<Kota>>("/admin/kota", payload).then((r) => r.data),
+
+  update: (id: number, payload: Partial<KotaPayload>) =>
+    api.put<ApiResponse<Kota>>(`/admin/kota/${id}`, payload).then((r) => r.data),
+
+  remove: (id: number) =>
+    api.delete<ApiResponse<null>>(`/admin/kota/${id}`).then((r) => r.data),
 };

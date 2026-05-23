@@ -20,6 +20,8 @@ import {
   tokoOlehOlehService,
   fasilitasIbadahService,
   transportasiService,
+  kotaService,
+  settingsService,
 } from "@/lib/service";
 import { useFetch } from "@/hooks/useFetch";
 import { deleteImageFromSupabase } from "@/lib/supabase";
@@ -29,8 +31,11 @@ import type { RestoranHalalPayload } from "@/types/restoranHalal";
 import type { TokoOlehOlehPayload } from "@/types/tokoOlehOleh";
 import type { FasilitasIbadahPayload } from "@/types/fasilitasIbadah";
 import type { TransportasiPayload } from "@/types/transportasi";
+import type { KotaPayload } from "@/types/kota";
+import type { SettingPayload } from "@/types/settings";
 
 type ViewType = "table" | "grid";
+type DashboardTab = EntityTab | "settings";
 
 // Normalized data item for table/grid display
 type DataItem = {
@@ -41,13 +46,15 @@ type DataItem = {
   status: string;
 };
 
-const entityTabs: { id: EntityTab; label: string; icon: string }[] = [
+const entityTabs: { id: DashboardTab; label: string; icon: string }[] = [
   { id: "wisata", label: "Wisata", icon: "🗺" },
   { id: "hotel", label: "Hotel", icon: "🏨" },
   { id: "restoran", label: "Restoran", icon: "🍜" },
   { id: "toko", label: "Oleh-oleh", icon: "🎁" },
   { id: "fasilitas", label: "Fasilitas Ibadah", icon: "🕌" },
   { id: "transportasi", label: "Transportasi", icon: "🚄" },
+  { id: "kota", label: "Kota", icon: "🏙" },
+  { id: "settings", label: "Settings", icon: "⚙️" },
 ];
 
 // Common record type for raw API entities
@@ -106,6 +113,14 @@ function transformToDataItems(tab: EntityTab, data: EntityRecord[]): DataItem[] 
         category: String(item.jenis_transportasi),
         status: "Aktif",
       }));
+    case "kota":
+      return data.map((item) => ({
+        id: String(item.id),
+        name: String(item.name),
+        city: "-",
+        category: "Kota",
+        status: "Aktif",
+      }));
     default:
       return [];
   }
@@ -126,6 +141,8 @@ function getFetcher(tab: EntityTab) {
       return () => fasilitasIbadahService.getAll();
     case "transportasi":
       return () => transportasiService.getAll();
+    case "kota":
+      return () => kotaService.getAll();
   }
 }
 
@@ -144,6 +161,8 @@ async function deleteItem(tab: EntityTab, id: number) {
       return fasilitasIbadahService.remove(id);
     case "transportasi":
       return transportasiService.remove(id);
+    case "kota":
+      return kotaService.remove(id);
   }
 }
 
@@ -162,6 +181,8 @@ async function createItem(tab: EntityTab, payload: Record<string, string | numbe
       return fasilitasIbadahService.create(payload as unknown as FasilitasIbadahPayload);
     case "transportasi":
       return transportasiService.create(payload as unknown as TransportasiPayload);
+    case "kota":
+      return kotaService.create(payload as unknown as KotaPayload);
   }
 }
 
@@ -180,12 +201,117 @@ async function updateItem(tab: EntityTab, id: number, payload: Record<string, st
       return fasilitasIbadahService.update(id, payload as unknown as Partial<FasilitasIbadahPayload>);
     case "transportasi":
       return transportasiService.update(id, payload as unknown as Partial<TransportasiPayload>);
+    case "kota":
+      return kotaService.update(id, payload as unknown as Partial<KotaPayload>);
   }
+}
+
+function SettingsView() {
+  const { data: rawSettings, loading, error, refetch } = useFetch(() => settingsService.getAll(), []);
+  
+  const [localSettings, setLocalSettings] = useState<{key: string, value: string}[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (rawSettings) {
+      setLocalSettings(rawSettings.map(s => ({ key: s.key, value: s.value })));
+    }
+  }, [rawSettings]);
+
+  const handleChange = (index: number, val: string) => {
+    const updated = [...localSettings];
+    updated[index].value = val;
+    setLocalSettings(updated);
+  };
+
+  const handleAdd = () => {
+    setLocalSettings([...localSettings, { key: "new_key", value: "" }]);
+  };
+
+  const handleKeyChange = (index: number, newKey: string) => {
+    const updated = [...localSettings];
+    updated[index].key = newKey;
+    setLocalSettings(updated);
+  };
+
+  const handleRemove = (index: number) => {
+    const updated = [...localSettings];
+    updated.splice(index, 1);
+    setLocalSettings(updated);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      for (const setting of localSettings) {
+        if (!setting.key) continue;
+        await settingsService.update(setting.key, { value: setting.value });
+      }
+      alert("Settings saved successfully!");
+      refetch();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to save settings");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (loading) return <div className="p-4 text-center">Loading settings...</div>;
+  if (error) return <div className="p-4 text-center text-red-500">{error}</div>;
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-bold text-slate-800">Application Settings</h3>
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:bg-slate-300"
+        >
+          {isSaving ? "Saving..." : "Save All Changes"}
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {localSettings.map((setting, idx) => (
+          <div key={idx} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              type="text"
+              value={setting.key}
+              onChange={(e) => handleKeyChange(idx, e.target.value)}
+              placeholder="Setting Key"
+              className="flex-1 rounded border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            />
+            <input
+              type="text"
+              value={setting.value}
+              onChange={(e) => handleChange(idx, e.target.value)}
+              placeholder="Setting Value"
+              className="flex-2 rounded border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            />
+            <button
+              onClick={() => handleRemove(idx)}
+              className="rounded bg-red-100 px-3 py-2 text-sm text-red-600 hover:bg-red-200"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+
+        <button
+          onClick={handleAdd}
+          className="mt-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
+        >
+          + Add New Setting
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function AdminDashboardContent() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<EntityTab>("wisata");
+  const [activeTab, setActiveTab] = useState<DashboardTab>("wisata");
   const [viewType, setViewType] = useState<ViewType>("table");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<CrudModalMode>("create");
@@ -202,12 +328,12 @@ export function AdminDashboardContent() {
   // Fetch data for active tab
   const { data: rawData, loading, error, refetch } = useFetch(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    () => getFetcher(activeTab)() as Promise<any>,
+    () => activeTab !== "settings" ? getFetcher(activeTab as EntityTab)() as Promise<any> : Promise.resolve([]),
     [activeTab]
   );
 
   const rawList: EntityRecord[] = useMemo(() => (rawData as EntityRecord[]) || [], [rawData]);
-  const currentData = useMemo(() => transformToDataItems(activeTab, rawList), [activeTab, rawList]);
+  const currentData = useMemo(() => activeTab !== "settings" ? transformToDataItems(activeTab as EntityTab, rawList) : [], [activeTab, rawList]);
 
   const tabLabel = entityTabs.find((t) => t.id === activeTab)?.label ?? "";
 
@@ -221,11 +347,12 @@ export function AdminDashboardContent() {
   };
 
   const handleOpenEditModal = (itemId: string) => {
+    if (activeTab === "settings") return;
     const rawItem = rawList.find((d) => String(d.id) === itemId);
     if (rawItem) {
       setModalMode("edit");
       setEditId(Number(itemId));
-      setEditFormData(apiItemToFormData(activeTab, rawItem));
+      setEditFormData(apiItemToFormData(activeTab as EntityTab, rawItem));
       setModalOpen(true);
     }
   };
@@ -237,13 +364,14 @@ export function AdminDashboardContent() {
   };
 
   const handleSubmitForm = async (data: EntityFormData) => {
-    const payload = formDataToPayload(activeTab, data);
+    if (activeTab === "settings") return;
+    const payload = formDataToPayload(activeTab as EntityTab, data);
 
     try {
       if (modalMode === "create") {
-        await createItem(activeTab, payload);
+        await createItem(activeTab as EntityTab, payload);
       } else if (editId !== null) {
-        await updateItem(activeTab, editId, payload);
+        await updateItem(activeTab as EntityTab, editId, payload);
       }
       handleCloseModal();
       refetch();
@@ -256,11 +384,12 @@ export function AdminDashboardContent() {
 
   const handleDelete = useCallback(
     async (itemId: string) => {
+      if (activeTab === "settings") return;
       if (!confirm("Yakin ingin menghapus data ini?")) return;
       try {
         const rawItem = rawList.find((d) => String(d.id) === itemId);
 
-        await deleteItem(activeTab, Number(itemId));
+        await deleteItem(activeTab as EntityTab, Number(itemId));
 
         
         // If there's an associated image, delete it from Supabase
@@ -314,9 +443,11 @@ export function AdminDashboardContent() {
             <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
               Daftar {tabLabel}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {loading ? "Memuat..." : `${currentData.length} data ditemukan`}
-            </p>
+            {activeTab !== "settings" && (
+              <p className="mt-1 text-sm text-slate-500">
+                {loading ? "Memuat..." : `${currentData.length} data ditemukan`}
+              </p>
+            )}
           </div>
 
           <div className="flex w-full flex-col-reverse gap-3 sm:w-auto sm:flex-row sm:items-center">
@@ -343,7 +474,7 @@ export function AdminDashboardContent() {
               </button>
             </div>
 
-            {activeTab !== "transportasi" && (
+            {activeTab !== "transportasi" && activeTab !== "settings" && (
               <button
                 onClick={handleOpenCreateModal}
                 className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-dark active:scale-95 w-full sm:w-auto"
@@ -358,8 +489,12 @@ export function AdminDashboardContent() {
           </div>
         </div>
 
-        {/* Loading skeleton */}
-        {loading ? (
+        {activeTab === "settings" ? (
+          <SettingsView />
+        ) : (
+          <>
+            {/* Loading skeleton */}
+            {loading ? (
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="space-y-4 p-6">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -392,11 +527,13 @@ export function AdminDashboardContent() {
             onDelete={activeTab === "transportasi" ? undefined : handleDelete} 
           />
         ) : (
-          <DashboardGridView 
-            data={currentData} 
-            onEdit={handleOpenEditModal} 
-            onDelete={activeTab === "transportasi" ? undefined : handleDelete} 
-          />
+            <DashboardGridView 
+              data={currentData} 
+              onEdit={handleOpenEditModal} 
+              onDelete={activeTab === "transportasi" ? undefined : handleDelete} 
+            />
+          )}
+        </>
         )}
       </div>
 
@@ -408,14 +545,16 @@ export function AdminDashboardContent() {
         subtitle={modalMode === "create" ? `Isi form di bawah untuk menambah ${tabLabel.toLowerCase()} baru` : `Perbarui informasi ${tabLabel.toLowerCase()}`}
         onClose={handleCloseModal}
       >
-        <EntityForm
-          key={`${activeTab}-${modalMode}-${editId ?? "new"}`}
-          entityTab={activeTab}
-          mode={modalMode}
-          initialData={editFormData}
-          onSubmit={handleSubmitForm}
-          onCancel={handleCloseModal}
-        />
+        {activeTab !== "settings" && (
+          <EntityForm
+            key={`${activeTab}-${modalMode}-${editId ?? "new"}`}
+            entityTab={activeTab as EntityTab}
+            mode={modalMode}
+            initialData={editFormData}
+            onSubmit={handleSubmitForm}
+            onCancel={handleCloseModal}
+          />
+        )}
       </AdminCrudModal>
     </>
   );
