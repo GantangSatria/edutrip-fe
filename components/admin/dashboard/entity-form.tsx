@@ -1,17 +1,19 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useMemo } from "react";
+import { useFetch } from "@/hooks/useFetch";
+import { kotaService } from "@/lib/service";
 
 // ─── Entity type definitions ─────────────────────────────────────────────────
 
-export type EntityTab = "wisata" | "hotel" | "restoran" | "toko" | "fasilitas" | "transportasi";
+export type EntityTab = "wisata" | "hotel" | "restoran" | "toko" | "fasilitas" | "transportasi" | "kota";
 
 export type EntityFormData = Record<string, string>;
 
 type FieldDef = {
   key: string;
   label: string;
-  type: "text" | "number" | "textarea" | "select" | "file";
+  type: "text" | "number" | "textarea" | "select" | "file" | "combobox";
   placeholder?: string;
   required?: boolean;
   options?: { value: string; label: string }[];
@@ -21,7 +23,6 @@ type FieldDef = {
 // ─── Field definitions per entity ────────────────────────────────────────────
 
 const cityOptions = [
-  { value: "", label: "Pilih Kota" },
   { value: "Tokyo", label: "Tokyo" },
   { value: "Osaka", label: "Osaka" },
   { value: "Kyoto", label: "Kyoto" },
@@ -30,7 +31,7 @@ const cityOptions = [
 const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
   wisata: [
     { key: "nama_wisata", label: "Nama Wisata", type: "text", placeholder: "Nama tempat wisata", required: true, half: true },
-    { key: "kota", label: "Kota", type: "select", options: cityOptions, required: true, half: true },
+    { key: "kota", label: "Kota", type: "combobox", options: cityOptions, placeholder: "Ketik atau pilih kota", required: true, half: true },
     { key: "kategori_wisata", label: "Kategori", type: "select", required: true, half: true, options: [
       { value: "", label: "Pilih Kategori" },
       { value: "Kampus", label: "Kampus" },
@@ -49,14 +50,14 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
   ],
   hotel: [
     { key: "nama_hotel", label: "Nama Hotel", type: "text", placeholder: "Nama hotel", required: true, half: true },
-    { key: "kota", label: "Kota", type: "select", options: cityOptions, required: true, half: true },
+    { key: "kota", label: "Kota", type: "combobox", options: cityOptions, placeholder: "Ketik atau pilih kota", required: true, half: true },
     { key: "tipe_hotel", label: "Tipe Hotel", type: "select", required: true, half: true, options: [
       { value: "", label: "Pilih Tipe" },
       { value: "Reguler", label: "Reguler" },
       { value: "Deluxe", label: "Deluxe" },
       { value: "VIP", label: "VIP" },
     ]},
-    { key: "harga_hotel", label: "Harga /malam (IDR)", type: "number", placeholder: "0", required: true, half: true },
+    { key: "harga_hotel", label: "Harga /kamar /malam (IDR)", type: "number", placeholder: "0", required: true, half: true },
     { key: "alamat_hotel", label: "Alamat", type: "text", placeholder: "Alamat hotel", required: true },
     { key: "latitude", label: "Latitude", type: "number", placeholder: "0.0", required: true, half: true },
     { key: "longitude", label: "Longitude", type: "number", placeholder: "0.0", required: true, half: true },
@@ -65,7 +66,7 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
   ],
   restoran: [
     { key: "nama_resto", label: "Nama Restoran", type: "text", placeholder: "Nama restoran", required: true, half: true },
-    { key: "kota", label: "Kota", type: "select", options: cityOptions, required: true, half: true },
+    { key: "kota", label: "Kota", type: "combobox", options: cityOptions, placeholder: "Ketik atau pilih kota", required: true, half: true },
     { key: "alamat_resto", label: "Alamat", type: "text", placeholder: "Alamat restoran", required: true },
     { key: "latitude", label: "Latitude", type: "number", placeholder: "0.0", required: true, half: true },
     { key: "longitude", label: "Longitude", type: "number", placeholder: "0.0", required: true, half: true },
@@ -75,7 +76,7 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
   ],
   toko: [
     { key: "nama_belanja", label: "Nama Toko", type: "text", placeholder: "Nama toko oleh-oleh", required: true, half: true },
-    { key: "kota", label: "Kota", type: "select", options: cityOptions, required: true, half: true },
+    { key: "kota", label: "Kota", type: "combobox", options: cityOptions, placeholder: "Ketik atau pilih kota", required: true, half: true },
     { key: "jenis_belanja", label: "Jenis", type: "select", required: true, half: true, options: [
       { value: "", label: "Pilih Jenis" },
       { value: "Toko Diskon", label: "Toko Diskon" },
@@ -93,7 +94,7 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
   ],
   fasilitas: [
     { key: "nama_fas_ibadah", label: "Nama Fasilitas", type: "text", placeholder: "Nama masjid / mushola", required: true, half: true },
-    { key: "kota", label: "Kota", type: "select", options: cityOptions, required: true, half: true },
+    { key: "kota", label: "Kota", type: "combobox", options: cityOptions, placeholder: "Ketik atau pilih kota", required: true, half: true },
     { key: "tipe_fas", label: "Tipe", type: "select", required: true, half: true, options: [
       { value: "", label: "Pilih Tipe" },
       { value: "Masjid", label: "Masjid" },
@@ -108,12 +109,27 @@ const fieldsByEntity: Record<EntityTab, FieldDef[]> = {
     { key: "nama_transportasi", label: "Nama Transportasi", type: "text", placeholder: "Nama transportasi", required: true, half: true },
     { key: "jenis_transportasi", label: "Jenis", type: "select", required: true, half: true, options: [
       { value: "Pesawat", label: "Pesawat" },
+      { value: "Kereta Cepat", label: "Kereta Cepat" },
+      { value: "Kereta Lokal", label: "Kereta Lokal" },
+      { value: "Bus", label: "Bus" },
+      { value: "Sewa Mobil", label: "Sewa Mobil" },
     ]},
-    { key: "rute", label: "Rute", type: "text", placeholder: "Tokyo - Osaka", required: true, half: true },
-    { key: "kode_bandara", label: "Kode Bandara", type: "text", placeholder: "NRT", half: true },
-    { key: "harga_transportasi_idr", label: "Harga (IDR)", type: "number", placeholder: "0", required: true },
-    { key: "ket_transportasi", label: "Keterangan", type: "textarea", placeholder: "Deskripsi transportasi..." },
+    { key: "rute", label: "Rute", type: "text", placeholder: "Contoh: Tokyo - Osaka", half: true },
+    { key: "harga_transportasi", label: "Harga (IDR)", type: "number", placeholder: "0", required: true, half: true },
+    { key: "ket_transportasi", label: "Keterangan", type: "text", placeholder: "Termasuk bagasi, dll..." },
   ],
+  kota: [
+    { key: "name", label: "Nama Kota", type: "text", placeholder: "Nama kota", required: true, half: true },
+    { key: "halal_spots_value", label: "Halal Spots Value", type: "text", placeholder: "150+", half: true },
+    { key: "halal_spots_label", label: "Halal Spots Label", type: "text", placeholder: "Tempat Halal", half: true },
+    { key: "main_mosque_title", label: "Nama Masjid Utama", type: "text", placeholder: "Tokyo Camii", half: true },
+    { key: "main_mosque_subtitle", label: "Subtitle Masjid Utama", type: "text", placeholder: "Masjid terbesar se-Jepang" },
+    { key: "features", label: "Features (Koma terpisah)", type: "textarea", placeholder: "Kuil bersejarah, Surga kuliner, Pemandangan alam..." },
+    { key: "terrain_lead", label: "Terrain Lead", type: "text", placeholder: "Medan:", half: true },
+    { key: "terrain_rest", label: "Terrain Rest", type: "text", placeholder: "Datar, ramah kursi roda.", half: true },
+    { key: "description", label: "Deskripsi (Landing Page)", type: "textarea", placeholder: "Deskripsi singkat kota..." },
+    { key: "foto", label: "Foto", type: "file" },
+  ]
 };
 
 // ─── Helpers to convert API response → form data ─────────────────────────────
@@ -127,7 +143,27 @@ export function apiItemToFormData(tab: EntityTab, raw: Record<string, unknown>):
   const result: EntityFormData = {};
 
   for (const field of fields) {
-    const val = raw[field.key];
+    let val = raw[field.key];
+    
+    // For 'kota', handle specific fields
+    if (tab === "kota") {
+      if (field.key === "foto") {
+        val = raw["image"];
+      } else if (field.key === "features" && typeof val === "string") {
+        try {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) {
+            val = parsed
+              .map((item) => (typeof item === "object" && item !== null ? item.text || "" : String(item)))
+              .filter(Boolean)
+              .join(", ");
+          }
+        } catch (e) {
+          // Not valid JSON, leave as raw string
+        }
+      }
+    }
+
     result[field.key] = val != null ? String(val) : "";
   }
 
@@ -146,11 +182,26 @@ export function formDataToPayload(tab: EntityTab, data: EntityFormData): Record<
     toko: ["latitude", "longitude"],
     fasilitas: ["latitude", "longitude"],
     transportasi: ["harga_transportasi_idr"],
+    kota: [],
   };
 
   for (const key of numericKeys[tab] || []) {
     if (payload[key] !== undefined) {
       payload[key] = Number(payload[key]) || 0;
+    }
+  }
+
+  if (tab === "kota") {
+    // Map foto to image for API
+    if (payload.foto) {
+      payload.image = payload.foto;
+      delete payload.foto;
+    }
+    // Parse features from comma-separated string to a stringified JSON array
+    // so it satisfies the Go `string` struct and the Postgres `JSONB` column.
+    if (typeof payload.features === "string") {
+      const arr = (payload.features as string).split(",").map(s => s.trim()).filter(s => s);
+      payload.features = JSON.stringify(arr);
     }
   }
 
@@ -192,6 +243,15 @@ export function EntityForm({
   const [formData, setFormData] = useState<EntityFormData>(initialData || defaultData);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { data: rawCities } = useFetch(() => kotaService.getAll(), []);
+  
+  const dynamicCityOptions = useMemo(() => {
+    return (rawCities || []).map((city) => ({
+      value: city.name,
+      label: city.name,
+    }));
+  }, [rawCities]);
 
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
 
@@ -395,6 +455,31 @@ export function EntityForm({
                          <p className="text-xs text-slate-500">File saat ini: {formData[field.key]}</p>
                        )}
                     </div>
+                  );
+                } else if (field.type === "combobox") {
+                  const listId = `${field.key}-datalist`;
+                  const options = field.key === "kota" && dynamicCityOptions.length > 0 
+                    ? dynamicCityOptions 
+                    : field.options || [];
+
+                  return (
+                    <>
+                      <input
+                        type="text"
+                        list={listId}
+                        className={inputClass}
+                        placeholder={field.placeholder}
+                        value={formData[field.key] ?? ""}
+                        onChange={(e) => handleChange(field.key, e.target.value)}
+                        disabled={isFieldDisabled}
+                        autoComplete="off"
+                      />
+                      <datalist id={listId}>
+                        {options.map((opt) => (
+                          <option key={opt.value} value={opt.value} />
+                        ))}
+                      </datalist>
+                    </>
                   );
                 } else {
                   return (

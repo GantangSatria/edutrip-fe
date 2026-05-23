@@ -17,6 +17,16 @@ function formatIDR(amount: number): string {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type CostBreakdown = {
+  hotelRate: number;
+  transportRate: number;
+  flightPrice: number;
+  rooms: number;
+  akomodasi: number;
+  transportasi: number;
+  pesawat: number;
+};
+
 type CartDetailModalProps = {
   open: boolean;
   onClose: () => void;
@@ -27,6 +37,8 @@ type CartDetailModalProps = {
   cityLabel: string;
   /** Grand total sudah dihitung di parent (IDR) — termasuk hotel, transport, dll */
   grandTotal: number;
+  /** Breakdown biaya otomatis untuk transparansi */
+  costBreakdown: CostBreakdown;
   onRemoveItem: (id: string) => void;
   onAddMore: () => void;
   /** WA redirect akan di-handle di sini setelah T&C */
@@ -150,6 +162,70 @@ function CartLineItem({
   );
 }
 
+function CartCostBreakdown({
+  breakdown,
+  people,
+  days,
+}: {
+  breakdown: CostBreakdown;
+  people: number;
+  days: number;
+}) {
+  const nights = Math.max(0, days - 1);
+  return (
+    <div className="mt-4 space-y-2 rounded-xl border border-blue-100 bg-blue-50/50 px-3 py-3 sm:px-4">
+      <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-blue-500 sm:text-xs">
+        Biaya Otomatis (Termasuk dalam Total)
+      </p>
+
+      {/* Hotel */}
+      <div className="flex items-start justify-between gap-2 text-xs text-slate-700 sm:text-sm">
+        <div className="flex items-center gap-1.5">
+          <span className="text-base leading-none" aria-hidden>🏨</span>
+          <div>
+            <span className="font-medium">Penginapan</span>
+            <p className="text-[0.6rem] text-slate-400 sm:text-[0.7rem]">
+              {formatIDR(breakdown.hotelRate)}/kamar/malam × {nights} malam × {breakdown.rooms} kamar
+              <span className="ml-1 text-blue-500">(maks 2 org/kamar)</span>
+            </p>
+          </div>
+        </div>
+        <span className="shrink-0 font-semibold text-slate-800">{formatIDR(breakdown.akomodasi)}</span>
+      </div>
+
+      {/* Transport */}
+      <div className="flex items-start justify-between gap-2 text-xs text-slate-700 sm:text-sm">
+        <div className="flex items-center gap-1.5">
+          <span className="text-base leading-none" aria-hidden>🚌</span>
+          <div>
+            <span className="font-medium">Transportasi Harian</span>
+            <p className="text-[0.6rem] text-slate-400 sm:text-[0.7rem]">
+              {formatIDR(breakdown.transportRate)}/hari/orang × {days} hari × {people} orang
+            </p>
+          </div>
+        </div>
+        <span className="shrink-0 font-semibold text-slate-800">{formatIDR(breakdown.transportasi)}</span>
+      </div>
+
+      {/* Flight */}
+      {breakdown.flightPrice > 0 && (
+        <div className="flex items-start justify-between gap-2 text-xs text-slate-700 sm:text-sm">
+          <div className="flex items-center gap-1.5">
+            <span className="text-base leading-none" aria-hidden>✈️</span>
+            <div>
+              <span className="font-medium">Pesawat PP</span>
+              <p className="text-[0.6rem] text-slate-400 sm:text-[0.7rem]">
+                {formatIDR(breakdown.flightPrice)}/sekali jalan × 2 × {people} orang
+              </p>
+            </div>
+          </div>
+          <span className="shrink-0 font-semibold text-slate-800">{formatIDR(breakdown.pesawat)}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CartTotalRow({ totalLabel }: { totalLabel: string }) {
   return (
     <div className="flex items-center justify-between border-t border-slate-200 pt-3">
@@ -201,6 +277,7 @@ export function CartDetailModal({
   cityLabel,
 
   grandTotal,
+  costBreakdown,
   onRemoveItem,
   onAddMore,
   onConsultWa,
@@ -284,9 +361,15 @@ export function CartDetailModal({
                         const meta = categoryMeta(categories, place.categoryId);
                         const icon = meta?.icon ?? "📍";
                         const isFree = place.price === 0;
-                        // Harga tiket per baris = harga tiket × jumlah orang (IDR)
-                        const lineIdr = isFree ? 0 : place.price * people;
-                        const linePriceLabel = isFree ? "Gratis" : formatIDR(lineIdr);
+                        const isHotel = place.categoryId === "hotel";
+                        // Hotel: harga per kamar (maks 2 orang), lainnya: per orang
+                        const rooms = Math.ceil(people / 2);
+                        const lineIdr = isFree ? 0 : isHotel ? place.price * rooms : place.price * people;
+                        const linePriceLabel = isFree
+                          ? "Gratis"
+                          : isHotel
+                            ? `${formatIDR(lineIdr)} (${rooms} kamar)`
+                            : formatIDR(lineIdr);
                         return (
                           <CartLineItem
                             key={place.id}
@@ -307,11 +390,15 @@ export function CartDetailModal({
 
           {selectedPlaces.length > 0 && (
             <>
-              {/* Info tambahan: biaya hotel & transport masuk grand total */}
-              <p className="mt-3 text-[0.65rem] leading-relaxed text-slate-400 sm:text-xs">
-                * Total sudah termasuk estimasi biaya penginapan, transportasi harian, dan tiket pesawat PP.
-              </p>
-              <CartTotalRow totalLabel={totalLabel} />
+              {/* Breakdown biaya otomatis — transparan */}
+              <CartCostBreakdown
+                breakdown={costBreakdown}
+                people={people}
+                days={days}
+              />
+              <div className="mt-3">
+                <CartTotalRow totalLabel={totalLabel} />
+              </div>
             </>
           )}
         </div>

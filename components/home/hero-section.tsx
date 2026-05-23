@@ -18,7 +18,7 @@ export function HeroSection() {
 
         <div className="mt-auto mb-10 text-center text-white sm:mb-14 lg:mb-16">
           <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[0.65rem] font-medium backdrop-blur-sm sm:text-[0.72rem]">
-            Musim-Friendly Trip Planner
+            Muslim-Friendly Trip Planner
           </span>
             <h1 className="mx-auto mt-4 max-w-[19rem] text-[1.75rem] leading-[1.2] font-semibold tracking-tight sm:max-w-[30rem] sm:text-[2.35rem] lg:max-w-[38rem] lg:text-[2.9rem]">
             Rencanakan{" "}

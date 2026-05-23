@@ -4,6 +4,7 @@ type ImageCategory =
   | "restoran"
   | "transportasi"
   | "fasilitas"
+  | "kota"
   | "toko";
 
 const FALLBACK_IMAGE = "/image/placeholder.jpg";

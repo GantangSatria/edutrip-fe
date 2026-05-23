@@ -14,7 +14,7 @@ import { CartDetailModal } from "@/components/plan/cart-detail-modal";
 import { openWhatsApp } from "@/lib/open-wa";
 import { calculateGrandTotal, buildWhatsAppUrl } from "@/lib/plan-calculator";
 import { getImageUrl } from "@/lib/image";
-import { planService, transportasiService } from "@/lib/service";
+import { planService, transportasiService, settingsService } from "@/lib/service";
 import { useFetch } from "@/hooks/useFetch";
 
 import {
@@ -377,6 +377,28 @@ export default function PlanPage() {
     [tags]
   );
 
+  const { data: rawSettings } = useFetch(() => settingsService.getAll(), []);
+
+  const localMasterRates = useMemo(() => {
+    const defaultRates: {
+      hotelRatePerNight: number;
+      transportRatePerDay: number;
+      avgMealRate: number;
+      flightPricePerPerson: number;
+    } = { ...MASTER_RATES };
+    if (rawSettings && Array.isArray(rawSettings)) {
+      rawSettings.forEach((setting) => {
+        const val = parseInt(setting.value, 10);
+        if (!isNaN(val)) {
+          if (setting.key === "hotel_rate_default") defaultRates.hotelRatePerNight = val;
+          if (setting.key === "transport_rate_per_day") defaultRates.transportRatePerDay = val;
+          if (setting.key === "avg_meal_rate") defaultRates.avgMealRate = val;
+        }
+      });
+    }
+    return defaultRates;
+  }, [rawSettings]);
+
   const cartCityLabel = useMemo(
     () => (activeCities.length > 0 ? activeCities.join(" & ") : "Belum dipilih"),
     [activeCities]
@@ -392,22 +414,34 @@ export default function PlanPage() {
     [detailPlace]
   );
 
-  // ─── Grand total (IDR) ──────────────────────────────────────────────────────
+  // ─── Grand total (IDR) ──────────────────────────────────────────────────────────────────
 
-  const { grandTotal } = useMemo(
+  const grandTotalResult = useMemo(
     () =>
         calculateGrandTotal({
           people: filters.people,
           days: filters.days,
-          hotelRatePerNight: MASTER_RATES.hotelRatePerNight,
-          transportRatePerDay: MASTER_RATES.transportRatePerDay,
+          hotelRatePerNight: localMasterRates.hotelRatePerNight,
+          transportRatePerDay: localMasterRates.transportRatePerDay,
           totalDestinationTickets: selectedPlaces.reduce((s, p) => s + p.price, 0),
           restaurantCount: selectedPlaces.filter((p) => p.categoryId === "restoran").length,
-          avgMealRate: MASTER_RATES.avgMealRate,
+          avgMealRate: localMasterRates.avgMealRate,
           flightPricePerPerson,
         }),
-      [filters.people, filters.days, selectedPlaces, flightPricePerPerson]
+      [filters.people, filters.days, selectedPlaces, flightPricePerPerson, localMasterRates]
     );
+
+  const { grandTotal } = grandTotalResult;
+
+  const costBreakdown = useMemo(() => ({
+    hotelRate: localMasterRates.hotelRatePerNight,
+    transportRate: localMasterRates.transportRatePerDay,
+    flightPrice: flightPricePerPerson,
+    rooms: grandTotalResult.rooms,
+    akomodasi: grandTotalResult.akomodasi,
+    transportasi: grandTotalResult.transportasi,
+    pesawat: grandTotalResult.pesawat,
+  }), [grandTotalResult, flightPricePerPerson]);
 
     // ─── WA redirect ────────────────────────────────────────────────────────────
 
@@ -595,6 +629,7 @@ const handleOpenWhatsApp = useCallback(() => {
         days={filters.days}
         cityLabel={cartCityLabel}
         grandTotal={grandTotal}
+        costBreakdown={costBreakdown}
         onRemoveItem={handleTogglePlace}
         onAddMore={handleCloseCart}
         onConsultWa={handleConsultClick}

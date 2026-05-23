@@ -22,7 +22,7 @@ function formatIDR(amount: number): string {
 //  GRAND TOTAL = Biaya Penginapan + Biaya Transportasi + Biaya Tiket Destinasi
 //              + Biaya Restoran + Biaya Tiket Pesawat PP
 //
-//  Biaya Penginapan      = hotelRatePerNight × (days - 1) × people
+//  Biaya Penginapan      = hotelRatePerNight × (days - 1) × ceil(people / 2) ← per KAMAR, maks 2 orang
 //  Biaya Transportasi    = transportRatePerDay × days × people
 //  Biaya Tiket Destinasi = Σ ticketPrice (checked destinations) × people
 //  Biaya Restoran        = restaurantCount × avgMealRate × people
@@ -47,6 +47,7 @@ export type GrandTotalInput = {
 
 export function calculateGrandTotal(input: GrandTotalInput): {
   akomodasi: number;
+  rooms: number;
   transportasi: number;
   destinasi: number;
   restoran: number;
@@ -65,8 +66,9 @@ export function calculateGrandTotal(input: GrandTotalInput): {
   } = input;
 
   const nights = Math.max(0, days - 1);
+  const rooms = Math.ceil(people / 2); // maks 2 orang per kamar
 
-  const akomodasi = hotelRatePerNight * nights * people;
+  const akomodasi = hotelRatePerNight * nights * rooms;
   const transportasi = transportRatePerDay * days * people;
   const destinasi = totalDestinationTickets * people;
   const restoran = restaurantCount * avgMealRate * people;
@@ -74,7 +76,7 @@ export function calculateGrandTotal(input: GrandTotalInput): {
 
   const grandTotal = akomodasi + transportasi + destinasi + restoran + pesawat;
 
-  return { akomodasi, transportasi, destinasi, restoran, pesawat, grandTotal };
+  return { akomodasi, rooms, transportasi, destinasi, restoran, pesawat, grandTotal };
 }
 
 // ─── WhatsApp URL Builder ─────────────────────────────────────────────────────
@@ -121,12 +123,12 @@ export function buildWhatsAppUrl(input: WaMessageInput): string {
     `- Kota Tujuan: ${cityLabel}`,
     `- Rencana Keberangkatan: ${departureDate}`,
     `- Durasi: ${days} Hari ${nights} Malam`,
-    `- Jumlah Peserta: ${people} Orang`,
+    `- Jumlah Peserta: ${people} Orang (${Math.ceil(people / 2)} kamar, maks 2 org/kamar)`,
     `- Destinasi Pilihan:`,
     destinationLines,
     `- Restoran Pilihan (Wishlist):`,
     restaurantLines,
-    "(Catatan: Biaya penginapan dan transportasi harian otomatis termasuk dalam estimasi paket)",
+    "",
     `- Estimasi Biaya Total: *${formatIDR(grandTotal)}*`,
     "",
     "Saya telah membaca dan menyetujui Syarat & Ketentuan layanan.",

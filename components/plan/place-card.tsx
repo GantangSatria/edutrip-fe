@@ -69,7 +69,9 @@ export function PlaceCard({ place, onToggle, onDetail }: PlaceCardProps) {
           >
             {priceLabel}
             {!isFree && (
-              <span className="ml-0.5 font-normal text-slate-400">/orang</span>
+              <span className="ml-0.5 font-normal text-slate-400">
+                {place.categoryId === "hotel" ? "/kamar/malam" : "/orang"}
+              </span>
             )}
           </span>
         </div>

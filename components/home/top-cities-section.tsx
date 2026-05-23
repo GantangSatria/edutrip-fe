@@ -4,9 +4,10 @@ import { useState, useCallback } from "react";
 
 import { SectionHeading } from "@/components/ui/section-heading";
 import { CityDetailModal } from "@/components/home/city-detail-modal";
-import { cityCards } from "@/data/travel";
-
-import type { City } from "@/types/travel";
+import { useFetch } from "@/hooks/useFetch";
+import { kotaService } from "@/lib/service";
+import { getImageUrl } from "@/lib/image";
+import type { City, CityFeature, CityFeatureId } from "@/types/travel";
 
 const cityMeta: Record<string, { tagline: string; halal: string }> = {
   Tokyo: { tagline: "Ibu kota teknologi dan budaya modern", halal: "150+ Halal" },
@@ -16,6 +17,49 @@ const cityMeta: Record<string, { tagline: string; halal: string }> = {
 
 export function TopCitiesSection() {
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
+
+  const { data: rawCities } = useFetch(() => kotaService.getAll(), []);
+
+  // Map API data to the frontend City type
+  const dynamicCityCards: City[] = (rawCities || []).map((kota) => {
+    // Parse features if they come as string array or stringified JSON
+    let parsedFeatures: any[] = [];
+    if (Array.isArray(kota.features)) {
+      parsedFeatures = kota.features;
+    } else if (typeof kota.features === "string") {
+      try {
+        parsedFeatures = JSON.parse(kota.features);
+      } catch {
+        parsedFeatures = (kota.features as string).split(",").map((s) => s.trim()).filter(Boolean);
+      }
+    }
+
+    const features: CityFeature[] = parsedFeatures.map((f: any, i) => {
+      if (typeof f === "object" && f !== null) {
+        return {
+          id: (f.id as CityFeatureId) || "building",
+          text: f.text || JSON.stringify(f),
+        };
+      }
+      return {
+        id: "building", // Fallback icon ID for plain strings
+        text: String(f),
+      };
+    });
+
+    return {
+      name: kota.name,
+      image: getImageUrl(kota.image, "kota"),
+      description: kota.description || "",
+      halalSpotsValue: kota.halal_spots_value || "0+",
+      halalSpotsLabel: kota.halal_spots_label || "Tempat Halal",
+      mainMosqueTitle: kota.main_mosque_title || "",
+      mainMosqueSubtitle: kota.main_mosque_subtitle || "",
+      features,
+      terrainLead: kota.terrain_lead || "Medan:",
+      terrainRest: kota.terrain_rest || "",
+    };
+  });
 
   const handleOpen = useCallback((city: City) => {
     setSelectedCity(city);
@@ -32,8 +76,8 @@ export function TopCitiesSection() {
         subtitle="Kenali kota-kota tujuan sebelum merencanakan trip"
       />
       <div className="mx-auto grid w-full max-w-md grid-cols-1 gap-4 px-4 sm:max-w-2xl sm:grid-cols-3 sm:px-6 lg:max-w-5xl lg:gap-5 lg:px-8">
-        {cityCards.map((city) => {
-          const meta = cityMeta[city.name] || { tagline: "", halal: "" };
+        {dynamicCityCards.map((city) => {
+          const meta = cityMeta[city.name] || { tagline: "", halal: city.halalSpotsValue + " Halal" };
           return (
             <button
               key={city.name}
