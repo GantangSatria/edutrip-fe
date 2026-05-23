@@ -392,9 +392,9 @@ export default function PlanPage() {
     [detailPlace]
   );
 
-  // ─── Grand total (IDR) ──────────────────────────────────────────────────────
+  // ─── Grand total (IDR) ──────────────────────────────────────────────────────────────────
 
-  const { grandTotal } = useMemo(
+  const grandTotalResult = useMemo(
     () =>
         calculateGrandTotal({
           people: filters.people,
@@ -408,6 +408,18 @@ export default function PlanPage() {
         }),
       [filters.people, filters.days, selectedPlaces, flightPricePerPerson]
     );
+
+  const { grandTotal } = grandTotalResult;
+
+  const costBreakdown = useMemo(() => ({
+    hotelRate: MASTER_RATES.hotelRatePerNight,
+    transportRate: MASTER_RATES.transportRatePerDay,
+    flightPrice: flightPricePerPerson,
+    rooms: grandTotalResult.rooms,
+    akomodasi: grandTotalResult.akomodasi,
+    transportasi: grandTotalResult.transportasi,
+    pesawat: grandTotalResult.pesawat,
+  }), [grandTotalResult, flightPricePerPerson]);
 
     // ─── WA redirect ────────────────────────────────────────────────────────────
 
@@ -595,6 +607,7 @@ const handleOpenWhatsApp = useCallback(() => {
         days={filters.days}
         cityLabel={cartCityLabel}
         grandTotal={grandTotal}
+        costBreakdown={costBreakdown}
         onRemoveItem={handleTogglePlace}
         onAddMore={handleCloseCart}
         onConsultWa={handleConsultClick}
