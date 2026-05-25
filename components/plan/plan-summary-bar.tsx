@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useJpyRate } from "@/hooks/useJpyRate";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -12,6 +13,15 @@ function formatIDR(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function formatJPY(amount: number): string {
+  return new Intl.NumberFormat("ja-JP", {
+    style: "currency",
+    currency: "JPY",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
@@ -333,6 +343,8 @@ export function PlanSummaryBar({
   onConsult,
 }: PlanSummaryBarProps) {
   const cityLabel = cities.length > 0 ? cities.join(" & ") : "Belum dipilih";
+  
+  const jpyRate = useJpyRate();
 
   if (selectedCount === 0) return null;
 
@@ -349,9 +361,16 @@ export function PlanSummaryBar({
               {cityLabel} · {people} orang · Estimasi total
             </p>
           </div>
-          <p className="mt-0.5 text-base font-bold text-rose-600 sm:text-lg lg:text-xl">
-            {formatIDR(grandTotal)}
-          </p>
+          <div className="mt-0.5 flex flex-wrap items-baseline gap-2">
+            <p className="text-base font-bold text-rose-600 sm:text-lg lg:text-xl">
+              {formatIDR(grandTotal)}
+            </p>
+            {jpyRate && (
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">
+                (~ {formatJPY(grandTotal / jpyRate)})
+              </p>
+            )}
+          </div>
           {disableConsult && (
             <p className="mt-0.5 text-[0.6rem] text-amber-600 sm:text-xs">
               ✈ Pilih bandara keberangkatan & tujuan untuk melanjutkan
