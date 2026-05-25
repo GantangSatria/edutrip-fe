@@ -414,6 +414,15 @@ export default function PlanPage() {
     [detailPlace]
   );
 
+  const dynamicHotelRate = useMemo(() => {
+    const selectedHotels = selectedPlaces.filter((p) => p.categoryId === "hotel");
+    if (selectedHotels.length > 0) {
+      // Use the max price if multiple are selected, or just the first one
+      return Math.max(...selectedHotels.map((h) => h.price));
+    }
+    return localMasterRates.hotelRatePerNight;
+  }, [selectedPlaces, localMasterRates.hotelRatePerNight]);
+
   // ─── Grand total (IDR) ──────────────────────────────────────────────────────────────────
 
   const grandTotalResult = useMemo(
@@ -421,27 +430,33 @@ export default function PlanPage() {
         calculateGrandTotal({
           people: filters.people,
           days: filters.days,
-          hotelRatePerNight: localMasterRates.hotelRatePerNight,
+          hotelRatePerNight: dynamicHotelRate,
           transportRatePerDay: localMasterRates.transportRatePerDay,
-          totalDestinationTickets: selectedPlaces.reduce((s, p) => s + p.price, 0),
-          restaurantCount: selectedPlaces.filter((p) => p.categoryId === "restoran").length,
+          totalDestinationTickets: selectedPlaces
+            .filter((p) => p.categoryId === "wisata")
+            .reduce((s, p) => s + p.price, 0),
+          restaurantCount: selectedPlaces.filter((p) => p.categoryId === "kuliner").length,
           avgMealRate: localMasterRates.avgMealRate,
           flightPricePerPerson,
+          hasSelectedHotel: selectedPlaces.some(p => p.categoryId === "hotel"),
         }),
-      [filters.people, filters.days, selectedPlaces, flightPricePerPerson, localMasterRates]
+      [filters.people, filters.days, selectedPlaces, flightPricePerPerson, localMasterRates, dynamicHotelRate]
     );
 
   const { grandTotal } = grandTotalResult;
 
   const costBreakdown = useMemo(() => ({
-    hotelRate: localMasterRates.hotelRatePerNight,
+    hotelRate: dynamicHotelRate,
     transportRate: localMasterRates.transportRatePerDay,
     flightPrice: flightPricePerPerson,
+    avgMealRate: localMasterRates.avgMealRate,
+    restaurantCount: selectedPlaces.filter((p) => p.categoryId === "kuliner").length,
     rooms: grandTotalResult.rooms,
     akomodasi: grandTotalResult.akomodasi,
     transportasi: grandTotalResult.transportasi,
     pesawat: grandTotalResult.pesawat,
-  }), [grandTotalResult, flightPricePerPerson]);
+    restoran: grandTotalResult.restoran,
+  }), [grandTotalResult, flightPricePerPerson, dynamicHotelRate, localMasterRates, selectedPlaces]);
 
     // ─── WA redirect ────────────────────────────────────────────────────────────
 
@@ -463,6 +478,7 @@ const handleOpenWhatsApp = useCallback(() => {
     destinations: destinasi,
     restaurants: restoran,
     grandTotal,
+    hasSelectedHotel: selectedPlaces.some(p => p.categoryId === "hotel"),
   });
 
   openWhatsApp(url);
@@ -630,6 +646,7 @@ const handleOpenWhatsApp = useCallback(() => {
         cityLabel={cartCityLabel}
         grandTotal={grandTotal}
         costBreakdown={costBreakdown}
+        hasSelectedHotel={selectedPlaces.some(p => p.categoryId === "hotel")}
         onRemoveItem={handleTogglePlace}
         onAddMore={handleCloseCart}
         onConsultWa={handleConsultClick}

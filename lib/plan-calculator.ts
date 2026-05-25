@@ -30,6 +30,7 @@ export type GrandTotalInput = {
   avgMealRate: number;
   /** Harga tiket pesawat SEKALI JALAN per orang — akan di-×2 (PP) oleh calculator */
   flightPricePerPerson: number;
+  hasSelectedHotel?: boolean;
 };
 
 export type GrandTotalResult = {
@@ -54,7 +55,7 @@ export function calculateGrandTotal(input: GrandTotalInput): GrandTotalResult {
     flightPricePerPerson,
   } = input;
 
-  const nights = Math.max(0, days - 1);
+  const nights = Math.max(input.hasSelectedHotel ? 1 : 0, days - 1);
   const rooms  = Math.ceil(people / 2); // maks 2 orang per kamar
 
   const akomodasi    = hotelRatePerNight       * nights          * rooms;
@@ -78,12 +79,13 @@ export type WaMessageInput = {
   destinations: string[];
   restaurants: string[];
   grandTotal: number;
+  hasSelectedHotel?: boolean;
 };
 
 export function buildWhatsAppUrl(input: WaMessageInput): string {
   const { cities, departureDate, days, people, destinations, restaurants, grandTotal } = input;
 
-  const nights    = Math.max(0, days - 1);
+  const nights    = Math.max(input.hasSelectedHotel ? 1 : 0, days - 1);
   const cityLabel = cities.length > 0 ? cities.join(", ") : "-";
 
   const destinationLines =
