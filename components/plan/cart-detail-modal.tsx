@@ -25,6 +25,9 @@ type CostBreakdown = {
   akomodasi: number;
   transportasi: number;
   pesawat: number;
+  avgMealRate: number;
+  restaurantCount: number;
+  restoran: number;
 };
 
 type CartDetailModalProps = {
@@ -39,6 +42,7 @@ type CartDetailModalProps = {
   grandTotal: number;
   /** Breakdown biaya otomatis untuk transparansi */
   costBreakdown: CostBreakdown;
+  hasSelectedHotel: boolean;
   onRemoveItem: (id: string) => void;
   onAddMore: () => void;
   /** WA redirect akan di-handle di sini setelah T&C */
@@ -74,8 +78,8 @@ function CartDetailModalHeader({ onClose }: { onClose: () => void }) {
   );
 }
 
-function CartTripSummaryBar({ cityLabel, days, people }: { cityLabel: string; days: number; people: number }) {
-  const nights = Math.max(0, days - 1);
+function CartTripSummaryBar({ cityLabel, days, people, hasSelectedHotel }: { cityLabel: string; days: number; people: number; hasSelectedHotel: boolean }) {
+  const nights = Math.max(hasSelectedHotel ? 1 : 0, days - 1);
   return (
     <div className="rounded-xl bg-slate-100 px-3 py-2.5 sm:px-4 sm:py-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
@@ -166,12 +170,14 @@ function CartCostBreakdown({
   breakdown,
   people,
   days,
+  hasSelectedHotel,
 }: {
   breakdown: CostBreakdown;
   people: number;
   days: number;
+  hasSelectedHotel: boolean;
 }) {
-  const nights = Math.max(0, days - 1);
+  const nights = Math.max(hasSelectedHotel ? 1 : 0, days - 1);
   return (
     <div className="mt-4 space-y-2 rounded-xl border border-blue-100 bg-blue-50/50 px-3 py-3 sm:px-4">
       <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-blue-500 sm:text-xs">
@@ -205,6 +211,20 @@ function CartCostBreakdown({
           </div>
         </div>
         <span className="shrink-0 font-semibold text-slate-800">{formatIDR(breakdown.transportasi)}</span>
+      </div>
+
+      {/* Restoran */}
+      <div className="flex items-start justify-between gap-2 text-xs text-slate-700 sm:text-sm">
+        <div className="flex items-center gap-1.5">
+          <span className="text-base leading-none" aria-hidden>🍜</span>
+          <div>
+            <span className="font-medium">Konsumsi (Restoran)</span>
+            <p className="text-[0.6rem] text-slate-400 sm:text-[0.7rem]">
+              {breakdown.restaurantCount} tempat × {formatIDR(breakdown.avgMealRate)}/makan × {people} orang
+            </p>
+          </div>
+        </div>
+        <span className="shrink-0 font-semibold text-slate-800">{formatIDR(breakdown.restoran)}</span>
       </div>
 
       {/* Flight */}
@@ -278,6 +298,7 @@ export function CartDetailModal({
 
   grandTotal,
   costBreakdown,
+  hasSelectedHotel,
   onRemoveItem,
   onAddMore,
   onConsultWa,
@@ -339,7 +360,7 @@ export function CartDetailModal({
         <CartDetailModalHeader onClose={onClose} />
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
-          <CartTripSummaryBar cityLabel={cityLabel} days={days} people={people} />
+          <CartTripSummaryBar cityLabel={cityLabel} days={days} people={people} hasSelectedHotel={hasSelectedHotel} />
 
           <div className="mt-4 space-y-4 sm:mt-5 sm:space-y-5">
             {selectedPlaces.length === 0 ? (
@@ -395,6 +416,7 @@ export function CartDetailModal({
                 breakdown={costBreakdown}
                 people={people}
                 days={days}
+                hasSelectedHotel={hasSelectedHotel}
               />
               <div className="mt-3">
                 <CartTotalRow totalLabel={totalLabel} />
